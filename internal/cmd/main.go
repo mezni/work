@@ -1,7 +1,8 @@
 package main
 
 import (
-	"github.com/bridge/pkg/utils"
+	"fmt"
+	"github.com/bridge/internal/util"
 )
 
 func main() {
