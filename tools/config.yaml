@@ -1,24 +1,101 @@
-variables:
-    SiteID: 
-        - "TUN1"
-        - "TUN2"
-        - "TUN3"
-    CDRType:
-        - name: MTSM
-          description: Mobile Terminated Call
-        - name: MOSM
-          description: Mobile Originated Call
-        - name: MOSS
-          description: Mobile Originated Short Message
-        - name: MTSS
-          description: Mobile Terminated Short Message
-    CDRSubType:
-        - name: 0001
-          description: Voice Call
-        - name: 0002
-          description: SMS
-        - name: 0003
-          description: GPRS
-        - name: 0004
-          description: MMS    
-filename_pattern: "{siteID}{MM}{DD}{HH}{MM}{SS}_{cdrType}_{cdrSubType}_CDR{cdrSeqNum}"
+outputs:
+    - destination_type: file
+      directory: "."
+      file_pattern: "processed_{timestamp}.csv"
+      format: csv
+      delimiter: "|"
+    - destination_type: file
+      format: ASN
+
+
+outputs:
+  - name: file_output_csv
+    type: file
+    format: csv
+    config:
+      path: .
+
+      
+output:
+  format: csv
+  filename: generated_data.csv
+
+# Column definitions
+columns:
+  - name: id
+    type: integer
+    generator: sequence
+    start: 1
+    increment: 1
+
+  - name: name
+    type: string
+    generator: faker
+    provider: name
+
+  - name: email
+    type: string
+    generator: faker
+    provider: email
+
+  - name: date_of_birth
+    type: date
+    generator: random
+    min: 1970-01-01
+    max: 2000-12-31
+
+# Data generation settings
+data_generation:
+  rows: 100
+  executions: 5  # Number of times to execute the data generation
+  delay_between_executions: 10  # Delay in seconds between executions
+
+# Optional: Logging settings
+logging:
+  level: INFO
+  filename: data_generator.log
+
+
+  - name: color
+    type: string
+    generator: list
+    values:
+      - Red
+      - Green
+      - Blue
+      - Yellow
+      - Purple
+    weight:  # Optional, defaults to equal weight
+      Red: 30
+      Green: 20
+      Blue: 50
+
+    weights:
+      - condition: Red
+        weight: 20
+      - condition: Green
+        weight: 30
+      - condition: Blue
+        weight: 40
+      - condition: default
+        weight: 5
+
+
+columns:
+  - name: firstName
+    type: string
+    generator: faker
+    provider: firstName
+
+  - name: lastName
+    type: string
+    generator: faker
+    provider: lastName
+
+  - name: fullName
+    type: string
+    generator: combine
+    columns:
+      - firstName
+      - lastName
+    format: "{{ .firstName }} {{ .lastName }}"

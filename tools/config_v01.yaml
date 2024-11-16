@@ -1,0 +1,24 @@
+variables:
+    SiteID: 
+        - "TUN1"
+        - "TUN2"
+        - "TUN3"
+    CDRType:
+        - name: MTSM
+          description: Mobile Terminated Call
+        - name: MOSM
+          description: Mobile Originated Call
+        - name: MOSS
+          description: Mobile Originated Short Message
+        - name: MTSS
+          description: Mobile Terminated Short Message
+    CDRSubType:
+        - name: 0001
+          description: Voice Call
+        - name: 0002
+          description: SMS
+        - name: 0003
+          description: GPRS
+        - name: 0004
+          description: MMS    
+filename_pattern: "{siteID}{MM}{DD}{HH}{MM}{SS}_{cdrType}_{cdrSubType}_CDR{cdrSeqNum}"
