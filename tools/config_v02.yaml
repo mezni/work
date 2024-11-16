@@ -1,0 +1,138 @@
+outputs:
+    - destination_type: file
+      directory: "."
+      file_pattern: "processed_{timestamp}.csv"
+      format: csv
+      delimiter: "|"
+    - destination_type: file
+      format: ASN
+
+
+outputs:
+  - name: file_output_csv
+    type: file
+    format: csv
+    config:
+      path: .
+
+      
+output:
+  format: csv
+  filename: generated_data.csv
+
+# Column definitions
+columns:
+  - name: id
+    type: integer
+    generator: sequence
+    start: 1
+    increment: 1
+
+  - name: name
+    type: string
+    generator: faker
+    provider: name
+
+  - name: email
+    type: string
+    generator: faker
+    provider: email
+
+  - name: date_of_birth
+    type: date
+    generator: random
+    min: 1970-01-01
+    max: 2000-12-31
+
+# Data generation settings
+data_generation:
+  rows: 100
+  executions: 5  # Number of times to execute the data generation
+  delay_between_executions: 10  # Delay in seconds between executions
+
+# Optional: Logging settings
+logging:
+  level: INFO
+  filename: data_generator.log
+
+
+  - name: color
+    type: string
+    generator: list
+    values:
+      - Red
+      - Green
+      - Blue
+      - Yellow
+      - Purple
+    weight:  # Optional, defaults to equal weight
+      Red: 30
+      Green: 20
+      Blue: 50
+
+    weights:
+      - condition: Red
+        weight: 20
+      - condition: Green
+        weight: 30
+      - condition: Blue
+        weight: 40
+      - condition: default
+        weight: 5
+
+
+columns:
+  - name: msisdn
+    type: string
+    generator: msisdn
+    country_code: 44  # UK country code
+    network_codes:
+      - 771
+      - 772
+      - 773
+    length: 10  # Length of subscriber number
+    weight:  # Optional, defaults to equal weight
+      771: 30
+      772: 40
+      773: 30
+
+columns:
+  - name: firstName
+    type: string
+    generator: faker
+    provider: firstName
+
+  - name: lastName
+    type: string
+    generator: faker
+    provider: lastName
+
+  - name: fullName
+    type: string
+    generator: combine
+    columns:
+      - firstName
+      - lastName
+    format: "{{ .firstName }} {{ .lastName }}"
+
+
+###############################################################
+###############################################################
+variables:
+  country_code: 216
+  network_codes:
+    - 20-24
+    - 25-29
+    - 30-34
+    - 40-44
+    - 50-54
+    - 55-59
+
+columns:
+  - name: msisdn
+    type: string
+    generator: msisdn
+    pattern: "+{{ country_code }}-{{ network_code }}-XXXXXX"
+    country_code_variable: country_code
+    network_code_variable: network_codes
+    subscriber_number_length: 7
