@@ -6,7 +6,14 @@ import (
 )
 
 func main() {
-	fmt.Println("Prefixes:")
-	root := msisdn.CreateTreeNode("local_msisdn")
-	fmt.Println(root)
+	prefixes := []string{"21650", "21651"}
+	digits := 6
+	localFlag := true
+	generator := msisdn.NewMSISDNConfig(prefixes, digits)
+	generator.SetLocal(localFlag)
+	msisdn := generator.Generate()
+	fmt.Println(msisdn)
+
+	msisdns := generator.GenerateList(10)
+	fmt.Println(msisdns)
 }
