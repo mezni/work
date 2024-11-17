@@ -3,17 +3,19 @@ package main
 import (
 	"fmt"
 	"math/rand"
-	"strconv"
-	"strings"
 
 	"gopkg.in/yaml.v3"
+)
+
+const (
+	DEFAULT_COUNTRY_CODE_KEY = "216"
 )
 
 // MSISDNConfig represents the configuration for generating MSISDNs
 type MSISDNConfig struct {
 	CountryCode interface{} `yaml:"country_code"`
-	NetworkCode []string    `yaml:"network_code"`
-	Format      string      `yaml:"format"`
+	// NetworkCode interface{} `yaml:"network_code"`
+	// Format      string      `yaml:"format"`
 }
 
 // ColumnConfig represents the configuration for a column
@@ -32,18 +34,17 @@ func main() {
 	// Sample YAML configuration
 	yamlConfig := `
 columns:
+  - name: calling_party_number1
+    type: msisdn
   - name: calling_party_number
     type: msisdn
     msisdn:
       country_code: 216
-      network_code: [50-55,30-35]
-      format: '+%country_code%%network_code%'
   - name: called_party_number
     type: msisdn
     msisdn:
       country_code: [216,212]
-      network_code: [50-55,30-35]
-      format: '+%country_code%%network_code%'
+      format: '+%country_code% %network_code%'
 `
 
 	// Unmarshal YAML configuration
@@ -54,16 +55,15 @@ columns:
 		return
 	}
 
-	// Generate MSISDNs for each column
 	for _, column := range config.Columns {
+
 		msisdn := generateMSISDN(column.MSISDN)
-		fmt.Printf("%s: %s\n", column.Name, msisdn)
+		fmt.Println(msisdn)
 	}
 }
 
 func generateMSISDN(config MSISDNConfig) string {
 	var countryCode string
-	var networkCode string
 
 	// Check if country_code is a slice or a single value
 	switch cc := config.CountryCode.(type) {
@@ -74,29 +74,9 @@ func generateMSISDN(config MSISDNConfig) string {
 		// Convert the single country code to a string
 		countryCode = fmt.Sprintf("%v", cc)
 	default:
-		fmt.Println("Unsupported country_code type")
-		return ""
+		return DEFAULT_COUNTRY_CODE_KEY
 	}
-
-	// Select a random network code range
-	networkCodeRange := config.NetworkCode[rand.Intn(len(config.NetworkCode))]
-
-	// Extract the start and end of the network code range
-	parts := strings.Split(networkCodeRange, "-")
-	start, _ := strconv.Atoi(parts[0])
-	end, _ := strconv.Atoi(parts[1])
-
-	// Generate a random network code within the selected range
-	networkCode = fmt.Sprintf("%d", rand.Intn(end-start+1)+start)
-
-	// Replace placeholders in the format string with actual values
-	msisdn := config.Format
-	msisdn = replacePlaceholder(msisdn, "%country_code%", countryCode)
-	msisdn = replacePlaceholder(msisdn, "%network_code%", networkCode)
+	msisdn := countryCode
 
 	return msisdn
-}
-
-func replacePlaceholder(str, placeholder, value string) string {
-	return strings.Replace(str, placeholder, value, 1)
 }
