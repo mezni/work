@@ -2,15 +2,41 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
 )
 
 const (
-	defaultCountryCode = "216"
+	defaultCountryCode = "216" // Tunisia's country code
 )
+
+// TreeNode represents a node in the tree
+type TreeNode struct {
+	Value    string
+	Children []*TreeNode
+}
+
+// CreateTreeNode creates a new tree node
+func CreateTreeNode(value string) *TreeNode {
+	return &TreeNode{Value: value, Children: make([]*TreeNode, 0)}
+}
+
+// AddChild adds a child node to the tree
+func AddChild(parent *TreeNode, child *TreeNode) {
+	parent.Children = append(parent.Children, child)
+}
+
+// PrintTree prints the tree
+func PrintTree(node *TreeNode, level int) {
+	fmt.Printf("%s%s\n", strings.Repeat("  ", level), node.Value)
+	for _, child := range node.Children {
+		PrintTree(child, level+1)
+	}
+}
 
 // MSISDNConfig represents the configuration for generating MSISDNs
 type MSISDNConfig struct {
@@ -36,7 +62,7 @@ func main() {
 	// Sample YAML configuration
 	yamlConfig := `
 columns:
-  - name: calling_party_number1
+  - name: test
     type: msisdn
   - name: calling_party_number
     type: msisdn
@@ -52,36 +78,49 @@ columns:
 	var config Config
 	err := yaml.Unmarshal([]byte(yamlConfig), &config)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("Error unmarshalling YAML configuration: %v", err)
 		return
 	}
 
 	for _, column := range config.Columns {
-		msisdn := generateMSISDN(column.MSISDN)
-		fmt.Println(msisdn)
+		err := generateMSISDNTree(column.Name, column.MSISDN)
+		if err != nil {
+			log.Printf("Error generating MSISDN tree: %v", err)
+			return
+		}
 	}
 }
 
-func generateMSISDN(config MSISDNConfig) []string {
+func generateMSISDNTree(name string, config MSISDNConfig) error {
+	countryCodes, err := getCountryCodes(config.CountryCode)
+	if err != nil {
+		return err
+	}
+
+	tree := CreateTreeNode(name)
+	for _, cc := range countryCodes {
+		countryCodeNode := CreateTreeNode(cc)
+		AddChild(tree, countryCodeNode)
+	}
+	PrintTree(tree, 0)
+	return nil
+}
+
+func getCountryCodes(countryCode interface{}) ([]string, error) {
 	var countryCodes []string
 
-	// Check if country_code is a slice or a single value
-	switch cc := config.CountryCode.(type) {
+	switch cc := countryCode.(type) {
 	case []interface{}:
-		// Convert the slice of country codes to a slice of strings
 		for _, code := range cc {
 			countryCodes = append(countryCodes, fmt.Sprintf("%v", code))
 		}
 	case string:
-		// Add the country code to the slice
 		countryCodes = append(countryCodes, cc)
 	case int:
-		// Convert the single country code to a string and add it to the slice
 		countryCodes = append(countryCodes, fmt.Sprintf("%v", cc))
 	default:
-		// Return a slice with the default country code if type is unknown
-		return []string{defaultCountryCode}
+		countryCodes = append(countryCodes, defaultCountryCode)
 	}
 
-	return countryCodes
+	return countryCodes, nil
 }
