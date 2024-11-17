@@ -3,16 +3,14 @@ package main
 import (
 	"fmt"
 	"log"
-	"math/rand"
 	"strings"
-	"time"
 
 	"gopkg.in/yaml.v3"
 )
 
 const (
-	defaultCountryCode = "216" // Tunisia's country code
-	defaultNetworkCode = "50"  // OTN's network code
+	defaultCountryCode = "216" // Default country code
+	defaultNetworkCode = "50"  // Default network code
 )
 
 // TreeNode represents a node in the tree
@@ -31,7 +29,7 @@ func AddChild(parent *TreeNode, child *TreeNode) {
 	parent.Children = append(parent.Children, child)
 }
 
-// PrintTree prints the tree
+// PrintTree prints the tree in a hierarchical format
 func PrintTree(node *TreeNode, level int) {
 	fmt.Printf("%s%s\n", strings.Repeat("  ", level), node.Value)
 	for _, child := range node.Children {
@@ -58,9 +56,6 @@ type Config struct {
 }
 
 func main() {
-	// Initialize random number generator
-	rand.Seed(time.Now().UnixNano())
-
 	// Sample YAML configuration
 	yamlConfig := `
 columns:
@@ -70,11 +65,11 @@ columns:
     type: msisdn
     msisdn:
       country_code: 216
-      network_code: [50,51]
+      network_code: [50, 51]
   - name: called_party_number
     type: msisdn
     msisdn:
-      country_code: [216,212]
+      country_code: [216, 212]
       network_code: 
         - 216: [50, 51]
         - 212: [06, 07]
@@ -84,99 +79,96 @@ columns:
 	var config Config
 	err := yaml.Unmarshal([]byte(yamlConfig), &config)
 	if err != nil {
-		log.Printf("Error unmarshalling YAML configuration: %v", err)
-		return
+		log.Fatalf("Error unmarshalling YAML configuration: %v", err)
 	}
 
+	// Process each column
 	for _, column := range config.Columns {
 		err := generateMSISDNTree(column)
 		if err != nil {
-			log.Printf("Error generating MSISDN tree: %v", err)
-			return
+			log.Printf("Error generating MSISDN tree for column '%s': %v", column.Name, err)
 		}
 	}
 }
 
+// generateMSISDNTree builds and prints an MSISDN tree for a given column
 func generateMSISDNTree(config ColumnConfig) error {
-	fmt.Println("#####")
-	fmt.Printf("Generating MSISDN tree for column: %s\n", config.Name)
+	fmt.Printf("\nGenerating MSISDN tree for column: %s\n", config.Name)
 
-	var countryCodes []string
-	var networkCodes []string
+	// Root node for the tree
+	root := CreateTreeNode(config.Name)
 
-	// Get country codes
+	// Extract country codes
 	countryCodes, err := getCountryCodes(config.MSISDN.CountryCode)
 	if err != nil {
 		return err
 	}
 
-	// Get network codes
-	networkCodes, err = getNetworkCodes(config.MSISDN.NetworkCode)
-	if err != nil {
-		return err
-	}
-	// WORK
-	fmt.Println("Root:", config.Name)
-	fmt.Println("Country Codes:", countryCodes)
-	fmt.Println("Network Codes:", networkCodes)
+	// Process each country code
+	for _, countryCode := range countryCodes {
+		countryNode := CreateTreeNode(fmt.Sprintf("Country: %s", countryCode))
+		AddChild(root, countryNode)
 
-	for _, networkCode := range networkCodes {
-		fmt.Println(networkCode)
-		fmt.Printf("Type of networkCode: %T\n", networkCode)
-	}
-	/*
-		// Create MSISDN tree
-		root := CreateTreeNode("MSISDN")
-		for _, countryCode := range countryCodes {
-			countryNode := CreateTreeNode(countryCode)
-			AddChild(root, countryNode)
-			for _, networkCode := range networkCodes {
-				networkNode := CreateTreeNode(networkCode)
-				AddChild(countryNode, networkNode)
-			}
+		// Extract network codes specific to the country
+		networkCodes, err := getNetworkCodesForCountry(countryCode, config.MSISDN.NetworkCode)
+	
+		if err != nil {
+			return err
 		}
 
-		// Print MSISDN tree
-		PrintTree(root, 0)
-	*/
+		// Add network codes as child nodes
+		for _, networkCode := range networkCodes {
+				fmt.Printf(networkCode)
+			networkNode := CreateTreeNode(fmt.Sprintf("Network: %s", networkCode))
+			AddChild(countryNode, networkNode)
+		}
+	}
+
+	// Print the generated tree
+	PrintTree(root, 0)
 	return nil
 }
 
-// getCountryCodes retrieves country codes from the provided configuration
-func getCountryCodes(countryCode interface{}) ([]string, error) {
-	var countryCodes []string
-
-	switch countryCode := countryCode.(type) {
-	case []interface{}:
-		for _, code := range countryCode {
-			countryCodes = append(countryCodes, fmt.Sprintf("%v", code))
-		}
-	case string:
-		countryCodes = append(countryCodes, countryCode)
-	case int:
-		countryCodes = append(countryCodes, fmt.Sprintf("%v", countryCode))
-	default:
-		countryCodes = append(countryCodes, defaultCountryCode)
-	}
-
-	return countryCodes, nil
+// getCountryCodes retrieves country codes from the configuration
+func getCountryCodes(input interface{}) ([]string, error) {
+	return extractValues(input, []string{defaultCountryCode})
 }
 
-func getNetworkCodes(networkCode interface{}) ([]string, error) {
-	var networkCodes []string
-
-	switch networkCode := networkCode.(type) {
+// getNetworkCodesForCountry retrieves network codes for a specific country
+func getNetworkCodesForCountry(country string, input interface{}) ([]string, error) {
+	switch v := input.(type) {
 	case []interface{}:
-		for _, code := range networkCode {
-			networkCodes = append(networkCodes, fmt.Sprintf("%v", code))
+		for _, item := range v {
+			if itemMap, ok := item.(map[interface{}]interface{}); ok {
+				if networks, found := itemMap[country]; found {
+					return extractValues(networks, []string{defaultNetworkCode})
+				}
+			}
 		}
-	case string:
-		networkCodes = append(networkCodes, networkCode)
-	case int:
-		networkCodes = append(networkCodes, fmt.Sprintf("%v", networkCode))
+		// No specific match found
+		return []string{defaultNetworkCode}, nil
 	default:
-		networkCodes = append(networkCodes, defaultNetworkCode)
+		// Handle non-hierarchical configurations
+		return extractValues(input, []string{defaultNetworkCode})
+	}
+}
+
+// extractValues converts input to a slice of strings with default fallback
+func extractValues(input interface{}, defaultValues []string) ([]string, error) {
+	var values []string
+
+	switch v := input.(type) {
+	case []interface{}: // List of values
+		for _, item := range v {
+			values = append(values, fmt.Sprintf("%v", item))
+		}
+	case string, int: // Single value
+		values = append(values, fmt.Sprintf("%v", v))
+	case nil: // Default values
+		return defaultValues, nil
+	default: // Unexpected types
+		return nil, fmt.Errorf("unexpected type: %T", v)
 	}
 
-	return networkCodes, nil
+	return values, nil
 }
