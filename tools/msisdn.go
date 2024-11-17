@@ -89,7 +89,7 @@ columns:
 	}
 
 	for _, column := range config.Columns {
-		err := generateMSISDNTree(column.Name, column.MSISDN)
+		err := generateMSISDNTree(column)
 		if err != nil {
 			log.Printf("Error generating MSISDN tree: %v", err)
 			return
@@ -97,51 +97,49 @@ columns:
 	}
 }
 
-// generateMSISDNTree generates the MSISDN tree based on the provided configuration
-func generateMSISDNTree(name string, config MSISDNConfig) error {
-	// Get country codes and network codes from the configuration
-	countryCodes, networkCodes, err := getMSISDNConfig(config)
-	if err != nil {
-		return err
-	}
+func generateMSISDNTree(config ColumnConfig) error {
+	fmt.Println("#####")
+	fmt.Printf("Generating MSISDN tree for column: %s\n", config.Name)
 
-	// Create the tree structure
-	tree := CreateTreeNode(name)
-	for _, countryCode := range countryCodes {
-		countryCodeNode := CreateTreeNode(countryCode)
-		AddChild(tree, countryCodeNode)
-		for _, networkCode := range networkCodes {
-			networkCodeNode := CreateTreeNode(networkCode)
-			AddChild(countryCodeNode, networkCodeNode)
-		}
-	}
-
-	// Print the tree
-	PrintTree(tree, 0)
-	return nil
-}
-
-// getMSISDNConfig retrieves country codes and network codes from the provided configuration
-func getMSISDNConfig(config MSISDNConfig) ([]string, []string, error) {
 	var countryCodes []string
 	var networkCodes []string
 
 	// Get country codes
-	countryCodes, err := getCountryCodes(config.CountryCode)
+	countryCodes, err := getCountryCodes(config.MSISDN.CountryCode)
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
 
 	// Get network codes
-	for _, countryCode := range countryCodes {
-		network, err := getNetworkCodes(config.NetworkCode, countryCode)
-		if err != nil {
-			return nil, nil, err
-		}
-		networkCodes = append(networkCodes, network...)
+	networkCodes, err = getNetworkCodes(config.MSISDN.NetworkCode)
+	if err != nil {
+		return err
 	}
+	// WORK
+	fmt.Println("Root:", config.Name)
+	fmt.Println("Country Codes:", countryCodes)
+	fmt.Println("Network Codes:", networkCodes)
 
-	return countryCodes, networkCodes, nil
+	for _, networkCode := range networkCodes {
+		fmt.Println(networkCode)
+		fmt.Printf("Type of networkCode: %T\n", networkCode)
+	}
+	/*
+		// Create MSISDN tree
+		root := CreateTreeNode("MSISDN")
+		for _, countryCode := range countryCodes {
+			countryNode := CreateTreeNode(countryCode)
+			AddChild(root, countryNode)
+			for _, networkCode := range networkCodes {
+				networkNode := CreateTreeNode(networkCode)
+				AddChild(countryNode, networkNode)
+			}
+		}
+
+		// Print MSISDN tree
+		PrintTree(root, 0)
+	*/
+	return nil
 }
 
 // getCountryCodes retrieves country codes from the provided configuration
@@ -164,8 +162,7 @@ func getCountryCodes(countryCode interface{}) ([]string, error) {
 	return countryCodes, nil
 }
 
-// getNetworkCodes retrieves network codes from the provided configuration
-func getNetworkCodes(networkCode interface{}, countryCode string) ([]string, error) {
+func getNetworkCodes(networkCode interface{}) ([]string, error) {
 	var networkCodes []string
 
 	switch networkCode := networkCode.(type) {
@@ -177,18 +174,6 @@ func getNetworkCodes(networkCode interface{}, countryCode string) ([]string, err
 		networkCodes = append(networkCodes, networkCode)
 	case int:
 		networkCodes = append(networkCodes, fmt.Sprintf("%v", networkCode))
-	case map[interface{}]interface{}:
-		// Handle the map structure
-		for k, v := range networkCode {
-			if k == countryCode {
-				switch v := v.(type) {
-				case []interface{}:
-					for _, code := range v {
-						networkCodes = append(networkCodes, fmt.Sprintf("%v", code))
-					}
-				}
-			}
-		}
 	default:
 		networkCodes = append(networkCodes, defaultNetworkCode)
 	}
