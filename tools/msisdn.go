@@ -12,6 +12,7 @@ import (
 
 const (
 	defaultCountryCode = "216" // Tunisia's country code
+	defaultNetworkCode = "50"  // OTN's network code
 )
 
 // TreeNode represents a node in the tree
@@ -41,6 +42,7 @@ func PrintTree(node *TreeNode, level int) {
 // MSISDNConfig represents the configuration for generating MSISDNs
 type MSISDNConfig struct {
 	CountryCode interface{} `yaml:"country_code"`
+	NetworkCode interface{} `yaml:"network_code"`
 }
 
 // ColumnConfig represents the configuration for a column
@@ -68,10 +70,14 @@ columns:
     type: msisdn
     msisdn:
       country_code: 216
+      network_code: [50,51]
   - name: called_party_number
     type: msisdn
     msisdn:
       country_code: [216,212]
+      network_code: 
+        - 216: [50, 51]
+        - 212: [06, 07]
 `
 
 	// Unmarshal YAML configuration
@@ -91,36 +97,101 @@ columns:
 	}
 }
 
+// generateMSISDNTree generates the MSISDN tree based on the provided configuration
 func generateMSISDNTree(name string, config MSISDNConfig) error {
-	countryCodes, err := getCountryCodes(config.CountryCode)
+	// Get country codes and network codes from the configuration
+	countryCodes, networkCodes, err := getMSISDNConfig(config)
 	if err != nil {
 		return err
 	}
 
+	// Create the tree structure
 	tree := CreateTreeNode(name)
-	for _, cc := range countryCodes {
-		countryCodeNode := CreateTreeNode(cc)
+	for _, countryCode := range countryCodes {
+		countryCodeNode := CreateTreeNode(countryCode)
 		AddChild(tree, countryCodeNode)
+		for _, networkCode := range networkCodes {
+			networkCodeNode := CreateTreeNode(networkCode)
+			AddChild(countryCodeNode, networkCodeNode)
+		}
 	}
+
+	// Print the tree
 	PrintTree(tree, 0)
 	return nil
 }
 
+// getMSISDNConfig retrieves country codes and network codes from the provided configuration
+func getMSISDNConfig(config MSISDNConfig) ([]string, []string, error) {
+	var countryCodes []string
+	var networkCodes []string
+
+	// Get country codes
+	countryCodes, err := getCountryCodes(config.CountryCode)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Get network codes
+	for _, countryCode := range countryCodes {
+		network, err := getNetworkCodes(config.NetworkCode, countryCode)
+		if err != nil {
+			return nil, nil, err
+		}
+		networkCodes = append(networkCodes, network...)
+	}
+
+	return countryCodes, networkCodes, nil
+}
+
+// getCountryCodes retrieves country codes from the provided configuration
 func getCountryCodes(countryCode interface{}) ([]string, error) {
 	var countryCodes []string
 
-	switch cc := countryCode.(type) {
+	switch countryCode := countryCode.(type) {
 	case []interface{}:
-		for _, code := range cc {
+		for _, code := range countryCode {
 			countryCodes = append(countryCodes, fmt.Sprintf("%v", code))
 		}
 	case string:
-		countryCodes = append(countryCodes, cc)
+		countryCodes = append(countryCodes, countryCode)
 	case int:
-		countryCodes = append(countryCodes, fmt.Sprintf("%v", cc))
+		countryCodes = append(countryCodes, fmt.Sprintf("%v", countryCode))
 	default:
 		countryCodes = append(countryCodes, defaultCountryCode)
 	}
 
 	return countryCodes, nil
+}
+
+// getNetworkCodes retrieves network codes from the provided configuration
+func getNetworkCodes(networkCode interface{}, countryCode string) ([]string, error) {
+	var networkCodes []string
+
+	switch networkCode := networkCode.(type) {
+	case []interface{}:
+		for _, code := range networkCode {
+			networkCodes = append(networkCodes, fmt.Sprintf("%v", code))
+		}
+	case string:
+		networkCodes = append(networkCodes, networkCode)
+	case int:
+		networkCodes = append(networkCodes, fmt.Sprintf("%v", networkCode))
+	case map[interface{}]interface{}:
+		// Handle the map structure
+		for k, v := range networkCode {
+			if k == countryCode {
+				switch v := v.(type) {
+				case []interface{}:
+					for _, code := range v {
+						networkCodes = append(networkCodes, fmt.Sprintf("%v", code))
+					}
+				}
+			}
+		}
+	default:
+		networkCodes = append(networkCodes, defaultNetworkCode)
+	}
+
+	return networkCodes, nil
 }
