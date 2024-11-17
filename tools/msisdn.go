@@ -3,19 +3,18 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
 
 const (
-	DEFAULT_COUNTRY_CODE_KEY = "216"
+	defaultCountryCode = "216"
 )
 
 // MSISDNConfig represents the configuration for generating MSISDNs
 type MSISDNConfig struct {
 	CountryCode interface{} `yaml:"country_code"`
-	// NetworkCode interface{} `yaml:"network_code"`
-	// Format      string      `yaml:"format"`
 }
 
 // ColumnConfig represents the configuration for a column
@@ -31,6 +30,9 @@ type Config struct {
 }
 
 func main() {
+	// Initialize random number generator
+	rand.Seed(time.Now().UnixNano())
+
 	// Sample YAML configuration
 	yamlConfig := `
 columns:
@@ -44,7 +46,6 @@ columns:
     type: msisdn
     msisdn:
       country_code: [216,212]
-      format: '+%country_code% %network_code%'
 `
 
 	// Unmarshal YAML configuration
@@ -56,27 +57,31 @@ columns:
 	}
 
 	for _, column := range config.Columns {
-
 		msisdn := generateMSISDN(column.MSISDN)
 		fmt.Println(msisdn)
 	}
 }
 
-func generateMSISDN(config MSISDNConfig) string {
-	var countryCode string
+func generateMSISDN(config MSISDNConfig) []string {
+	var countryCodes []string
 
 	// Check if country_code is a slice or a single value
 	switch cc := config.CountryCode.(type) {
 	case []interface{}:
-		// Select a random country code from the slice
-		countryCode = fmt.Sprintf("%v", cc[rand.Intn(len(cc))])
+		// Convert the slice of country codes to a slice of strings
+		for _, code := range cc {
+			countryCodes = append(countryCodes, fmt.Sprintf("%v", code))
+		}
+	case string:
+		// Add the country code to the slice
+		countryCodes = append(countryCodes, cc)
 	case int:
-		// Convert the single country code to a string
-		countryCode = fmt.Sprintf("%v", cc)
+		// Convert the single country code to a string and add it to the slice
+		countryCodes = append(countryCodes, fmt.Sprintf("%v", cc))
 	default:
-		return DEFAULT_COUNTRY_CODE_KEY
+		// Return a slice with the default country code if type is unknown
+		return []string{defaultCountryCode}
 	}
-	msisdn := countryCode
 
-	return msisdn
+	return countryCodes
 }
