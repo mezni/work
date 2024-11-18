@@ -1,25 +1,36 @@
 package main
 
 import (
-	"fmt"
+//	"fmt"
 	"github.com/mezni/bridge/tools/gencdr"
 	"time"
 )
 
 func main() {
 	// Create a new list of records
-	records := gencdr.NewRecordList()
+	records := gencdr.NewRecords()
+
+	// Create some sample records
+	record1 := gencdr.NewRecord("id", 1)
+	record1.AddKeyValue("name", "John Doe")
+	record1.AddKeyValue("birthdate", time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC))
+	record1.AddKeyValue("city", "Toronto")
+
+	record2 := gencdr.NewRecord("id", 2)
+	record2.AddKeyValue("name", "Jane Doe")
+	record2.AddKeyValue("birthdate", time.Date(1995, time.June, 15, 0, 0, 0, 0, time.UTC))
+	record2.AddKeyValue("city", "Vancouver")
+
+	record3 := gencdr.NewRecord("id", 3)
+	record3.AddKeyValue("name", "Bob Smith")
+	record3.AddKeyValue("birthdate", time.Date(1980, time.March, 20, 0, 0, 0, 0, time.UTC))
+	record3.AddKeyValue("city", "Montreal")
 
 	// Add records to the list
-	records.AddRecord(gencdr.NewRecord("Name", "John Doe"))
-	records.AddRecord(gencdr.NewRecord("Age", 30))
-	records.AddRecord(gencdr.NewRecord("Birthday", time.Date(1994, time.January, 1, 0, 0, 0, 0, time.UTC)))
-	records.AddRecord(gencdr.NewRecord("Occupation", "Software Engineer"))
-	records.AddRecord(gencdr.NewRecord("Experience", 5))
-	records.AddRecord(gencdr.NewRecord("Joining Date", time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC)))
+	records.AddRecord(record1)
+	records.AddRecord(record2)
+	records.AddRecord(record3)
 
-	// Print records
-	for _, r := range records {
-		fmt.Printf("%s: %v\n", r.Key, r.Value)
-	}
+	// Print out all records
+	records.PrintRecords()
 }

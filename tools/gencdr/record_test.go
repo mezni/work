@@ -2,63 +2,94 @@ package gencdr
 
 import (
 	"testing"
+	"time"
 )
 
 func TestNewRecord(t *testing.T) {
-	key := "test_key"
-	value := "test_value"
+	key := "id"
+	value := 1
 	record := NewRecord(key, value)
 
-	if record.Key != key {
-		t.Errorf("expected key %s, got %s", key, record.Key)
+	if len(record) != 1 {
+		t.Errorf("Expected record to have 1 key-value pair, but got %d", len(record))
 	}
 
-	if record.Value != value {
-		t.Errorf("expected value %s, got %s", value, record.Value)
+	if record[key] != value {
+		t.Errorf("Expected record to have value %v for key %s, but got %v", value, key, record[key])
 	}
 }
 
-func TestNewRecordList(t *testing.T) {
-	recordList := NewRecordList()
-	if len(recordList) != 0 {
-		t.Errorf("expected empty list, got %v", recordList)
+func TestNewRecords(t *testing.T) {
+	records := NewRecords()
+
+	if len(records) != 0 {
+		t.Errorf("Expected new records to be empty, but got %d records", len(records))
 	}
 }
 
 func TestAddRecord(t *testing.T) {
-	recordList := NewRecordList()
-	record := NewRecord("test_key", "test_value")
-	recordList.AddRecord(record)
+	records := NewRecords()
+	record := NewRecord("id", 1)
 
-	if len(recordList) != 1 {
-		t.Errorf("expected list with 1 record, got %v", recordList)
+	records.AddRecord(record)
+
+	if len(records) != 1 {
+		t.Errorf("Expected records to have 1 record, but got %d", len(records))
 	}
 
-	if recordList[0].Key != "test_key" {
-		t.Errorf("expected key %s, got %s", "test_key", recordList[0].Key)
-	}
-
-	if recordList[0].Value != "test_value" {
-		t.Errorf("expected value %s, got %s", "test_value", recordList[0].Value)
+	if records[0]["id"] != 1 {
+		t.Errorf("Expected record to have value 1 for key id, but got %v", records[0]["id"])
 	}
 }
 
-func TestAddMultipleRecords(t *testing.T) {
-	recordList := NewRecordList()
-	record1 := NewRecord("test_key1", "test_value1")
-	record2 := NewRecord("test_key2", "test_value2")
-	recordList.AddRecord(record1)
-	recordList.AddRecord(record2)
+func TestAddKeyValue(t *testing.T) {
+	record := NewRecord("id", 1)
+	key := "name"
+	value := "John Doe"
 
-	if len(recordList) != 2 {
-		t.Errorf("expected list with 2 records, got %v", recordList)
+	record.AddKeyValue(key, value)
+
+	if len(record) != 2 {
+		t.Errorf("Expected record to have 2 key-value pairs, but got %d", len(record))
 	}
 
-	if recordList[0].Key != "test_key1" {
-		t.Errorf("expected key %s, got %s", "test_key1", recordList[0].Key)
+	if record[key] != value {
+		t.Errorf("Expected record to have value %v for key %s, but got %v", value, key, record[key])
+	}
+}
+
+func TestPrintRecords(t *testing.T) {
+	records := NewRecords()
+	record1 := NewRecord("id", 1)
+	record1.AddKeyValue("name", "John Doe")
+	records.AddRecord(record1)
+
+	record2 := NewRecord("id", 2)
+	record2.AddKeyValue("name", "Jane Doe")
+	records.AddRecord(record2)
+
+	// Test that PrintRecords doesn't panic
+	records.PrintRecords()
+}
+
+func TestRecordWithDifferentTypes(t *testing.T) {
+	record := NewRecord("id", 1)
+	record.AddKeyValue("name", "John Doe")
+	record.AddKeyValue("birthdate", time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC))
+
+	if len(record) != 3 {
+		t.Errorf("Expected record to have 3 key-value pairs, but got %d", len(record))
 	}
 
-	if recordList[1].Key != "test_key2" {
-		t.Errorf("expected key %s, got %s", "test_key2", recordList[1].Key)
+	if record["id"] != 1 {
+		t.Errorf("Expected record to have value 1 for key id, but got %v", record["id"])
+	}
+
+	if record["name"] != "John Doe" {
+		t.Errorf("Expected record to have value John Doe for key name, but got %v", record["name"])
+	}
+
+	if record["birthdate"].(time.Time).Year() != 1990 {
+		t.Errorf("Expected record to have value 1990 for key birthdate, but got %v", record["birthdate"])
 	}
 }
