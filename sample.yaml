@@ -1,0 +1,94 @@
+columns:
+  - name: "CDR ID"
+    type: "integer"
+    unique: true
+    description: "Unique identifier for the CDR"
+    min_value: 1000000000
+    max_value: 9999999999
+    format: "random"  # You can set this to random or a specific pattern if needed
+  
+  - name: "IMSI"
+    type: "string"
+    length: 15
+    format: "random_digits"
+    description: "International Mobile Subscriber Identity"
+
+  - name: "MSISDN"
+    type: "string"
+    length: 14
+    format: "phone_number"
+    description: "Mobile Subscriber Integrated Services Digital Network Number"
+  
+  - name: "Call Start Time"
+    type: "datetime"
+    format: "YYYY-MM-DD HH:MM:SS"
+    description: "Timestamp when the call starts"
+    min_datetime: "2024-11-01 00:00:00"
+    max_datetime: "2024-11-17 23:59:59"
+
+  - name: "Call End Time"
+    type: "datetime"
+    format: "YYYY-MM-DD HH:MM:SS"
+    description: "Timestamp when the call ends"
+    min_datetime: "2024-11-01 00:00:00"
+    max_datetime: "2024-11-17 23:59:59"
+    dependent_on: "Call Start Time"
+
+  - name: "Call Duration"
+    type: "integer"
+    min_value: 30
+    max_value: 7200  # 2 hours max
+    description: "Duration of the call in seconds"
+    dependent_on: "Call Start Time"
+
+  - name: "Call Type"
+    type: "string"
+    values: ["Voice", "Data"]
+    description: "Type of the call"
+
+  - name: "Call Outcome"
+    type: "string"
+    values: ["Completed", "Failed", "Aborted"]
+    description: "Outcome of the call"
+
+  - name: "Cell ID"
+    type: "integer"
+    description: "Cell ID for the base station"
+    min_value: 100
+    max_value: 999
+    format: "random"
+
+  - name: "Location Area Code"
+    type: "integer"
+    description: "Location Area Code for the call"
+    min_value: 100
+    max_value: 999
+    format: "random"
+
+  - name: "MSC ID"
+    type: "string"
+    length: 6
+    format: "random_alphanumeric"
+    description: "Mobile Switching Center ID"
+
+  - name: "Called MSISDN"
+    type: "string"
+    length: 14
+    format: "phone_number"
+    description: "The phone number dialed"
+    dependent_on: "Call Type"
+  
+  - name: "Tariff Class"
+    type: "string"
+    values: ["Normal", "Discounted", "Premium"]
+    description: "The pricing category for the call"
+
+  - name: "Service Type"
+    type: "string"
+    values: ["Mobile Voice Call", "Mobile Data Session"]
+    description: "The type of service the CDR corresponds to"
+
+  - name: "Payment Type"
+    type: "string"
+    values: ["Prepaid", "Postpaid"]
+    description: "Payment method used by the subscriber"
