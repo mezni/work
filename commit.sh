@@ -13,5 +13,5 @@ VERSION="v1.0.$PATCH"
 # Git operations
 git add .
 git commit -m "$MODULE $DATE"
-git tag $VERSION
-git push origin main $VERSION
+git tag -f $VERSION
+git push origin main $VERSION --force-with-lease
