@@ -10,6 +10,10 @@ DATE=$(date +%Y-%m-%d)
 PATCH=$(date +%Y%m%d)
 VERSION="v1.0.$PATCH"
 
+# Clean tags
+git tag -d $(git tag)
+git push origin --delete $(git tag)
+
 # Git operations
 git add .
 git commit -m "$MODULE $DATE"
