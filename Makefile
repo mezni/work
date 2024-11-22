@@ -3,7 +3,7 @@ GOBUILD       = $(GO) build
 GOCLEAN       = $(GO) clean
 GOTEST        = $(GO) test
 GOGET         = $(GO) get
-GOFMT         = $(GO) fmt
+GOFMT         = $(GO)fmt
 GOVET         = $(GO) vet
 
 BINARY        = myapp
