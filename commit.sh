@@ -10,7 +10,7 @@ DATE=$(date +%Y-%m-%d)
 # PATCH=$(date +%Y%m%d)
 PATCH=$(uuidgen | tr -d '-' | cut -c 1-8)
 VERSION="v0.0.$PATCH"
-
+echo $VERSION
 # Clean tags
 #git tag -d $(git tag)
 #git push origin --delete $(git tag)
