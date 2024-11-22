@@ -7,11 +7,12 @@ MODULE="gencdr"
 DATE=$(date +%Y-%m-%d)
 
 # Increment patch version
-PATCH=$(date +%Y%m%d)
-VERSION="v1.0.$PATCH"
+# PATCH=$(date +%Y%m%d)
+PATCH=$(uuidgen | tr -d '-' | cut -c 1-8)
+VERSION="v0.0.$PATCH"
 
 # Clean tags
-git tag -d $(git tag)
+#git tag -d $(git tag)
 #git push origin --delete $(git tag)
 
 # Git operations
