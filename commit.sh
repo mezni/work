@@ -18,5 +18,5 @@ echo $VERSION
 # Git operations
 git add .
 git commit -m "$MODULE $DATE"
-git tag -f $VERSION
-git push origin main $VERSION --delete $(git tag)
+git tag $VERSION
+git push origin main $VERSION 
