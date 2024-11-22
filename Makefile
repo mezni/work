@@ -7,7 +7,8 @@ GOFMT         = $(GO)fmt
 GOVET         = $(GO) vet
 
 BINARY        = myapp
-SRC           = $(shell find . -type f -name '*.go')
+#SRC           = $(shell find . -type f -name '*.go')
+SRC           = tools/cdrgen/cmd/main.go
 
 all: build
 
