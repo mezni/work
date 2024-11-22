@@ -18,5 +18,6 @@ echo $VERSION
 # Git operations
 git add .
 git commit -m "$MODULE $DATE"
-git tag $VERSION
-git push origin main $VERSION 
+git push origin main
+#git tag $VERSION
+#git push origin main $VERSION 
