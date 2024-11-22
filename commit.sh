@@ -12,10 +12,10 @@ VERSION="v1.0.$PATCH"
 
 # Clean tags
 git tag -d $(git tag)
-git push origin --delete $(git tag)
+#git push origin --delete $(git tag)
 
 # Git operations
 git add .
 git commit -m "$MODULE $DATE"
 git tag -f $VERSION
-git push origin main $VERSION --force-with-lease
+git push origin main $VERSION --delete $(git tag)
