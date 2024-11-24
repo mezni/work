@@ -1,70 +1,56 @@
-package logging
+package infrastructure
 
 import (
 	"fmt"
-	"golang.org/x/exp/slog"
+	"log"
+	"os"
 	"time"
 )
 
-// SlogLogger is an implementation of the Logger interface using Go's slog package.
-type SlogLogger struct {
-	logger *slog.Logger
+// Logger defines the methods required for a custom logger.
+type Logger interface {
+	Info(msg string, args ...interface{})
+	Error(msg string, args ...interface{})
+	Debug(msg string, args ...interface{})
 }
 
-// NewSlogLogger creates a new SlogLogger instance.
-func NewSlogLogger(module string) *SlogLogger {
-	// Create a custom handler with the given module name
-	handler := NewCustomHandler(module)
+// CustomLogger is an implementation of the Logger interface.
+type CustomLogger struct {
+	module string
+	logger *log.Logger
+}
 
-	// Initialize a new slog logger with the custom handler
-	return &SlogLogger{
-		logger: slog.New(handler),
+// NewCustomLogger creates a new CustomLogger instance.
+func NewCustomLogger(module string) *CustomLogger {
+	// Initialize a new logger instance with the desired format
+	logger := log.New(os.Stdout, "", log.LstdFlags) // Logs to stdout with default timestamp
+
+	return &CustomLogger{
+		module: module,
+		logger: logger,
 	}
 }
 
 // Info logs an informational message.
-func (l *SlogLogger) Info(msg string, args ...interface{}) {
-	l.logger.Info(msg, args...)
+func (l *CustomLogger) Info(msg string, args ...interface{}) {
+	l.log("INFO", msg, args...)
 }
 
 // Error logs an error message.
-func (l *SlogLogger) Error(msg string, args ...interface{}) {
-	l.logger.Error(msg, args...)
+func (l *CustomLogger) Error(msg string, args ...interface{}) {
+	l.log("ERROR", msg, args...)
 }
 
 // Debug logs a debug message.
-func (l *SlogLogger) Debug(msg string, args ...interface{}) {
-	l.logger.Debug(msg, args...)
+func (l *CustomLogger) Debug(msg string, args ...interface{}) {
+	l.log("DEBUG", msg, args...)
 }
 
-// CustomHandler is a custom log handler that formats logs with timestamp, module, level, and message.
-type CustomHandler struct {
-	Handler slog.Handler
-	Module  string
-}
+// log is a private method to format and log the message with a level.
+func (l *CustomLogger) log(level string, msg string, args ...interface{}) {
+	// Format the log message with the timestamp and module
+	logMessage := fmt.Sprintf("[%s] [%s] [%s] %s", time.Now().Format("2006-01-02 15:04:05"), l.module, level, fmt.Sprintf(msg, args...))
 
-// NewCustomHandler creates a new CustomHandler instance.
-func NewCustomHandler(module string) *CustomHandler {
-	return &CustomHandler{
-		Handler: slog.NewTextHandler(slog.LevelInfo), // Default handler with info level
-		Module:  module,
-	}
-}
-
-// Handle implements the slog.Handler interface.
-// This method formats the log entries to the desired format.
-func (h *CustomHandler) Handle(r slog.Record) error {
-	// Get the timestamp formatted as [YYYY-MM-DD HH:MM:SS]
-	timestamp := time.Now().Format("2006-01-02 15:04:05")
-
-	// Log level
-	level := r.Level.String()
-
-	// Format the log entry
-	logMessage := fmt.Sprintf("[%s] [%s] [%s] %s", timestamp, h.Module, level, r.Message)
-
-	// Log the message using the default handler
-	fmt.Println(logMessage)
-
-	return nil
+	// Print the formatted log message
+	l.logger.Println(logMessage)
 }
