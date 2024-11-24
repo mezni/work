@@ -1,4 +1,4 @@
-package service
+package application
 
 import (
 	"github.com/mezni/bridge/tools/cdrgen/internal/domain"
