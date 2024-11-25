@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
+	"github.com/mezni/bridge/tools/cdrgen/internal/application"
 	"github.com/mezni/bridge/tools/cdrgen/internal/domain"
 	"github.com/mezni/bridge/tools/cdrgen/internal/infrastructure"
-	"github.com/mezni/bridge/tools/cdrgen/internal/application"
 )
 
 func main() {
@@ -19,12 +19,12 @@ func main() {
 	logger.Init(ctx, module)
 
 	// Initialize the dummy service
-//	dummyService := domain.NewDummyService(logger)
+	//	dummyService := domain.NewDummyService(logger)
 
 	// Create the application service
-//	appService := application.NewApplicationService(dummyService, logger)
+	//	appService := application.NewApplicationService(dummyService, logger)
 
 	// Start and stop the service
-//	appService.StartService(ctx, module)
-//	appService.StopService(ctx, module)
+	//	appService.StartService(ctx, module)
+	//	appService.StopService(ctx, module)
 }

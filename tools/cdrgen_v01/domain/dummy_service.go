@@ -1,8 +1,8 @@
 package domain
 
 import (
-	"time"
 	"github.com/mezni/bridge/tools/cdrgen/infrastructure"
+	"time"
 )
 
 // DummyService is a service that does nothing for the sake of illustration.

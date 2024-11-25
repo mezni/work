@@ -1,10 +1,10 @@
 package main
 
 import (
-	"log"
 	"github.com/mezni/bridge/tools/cdrgen/application"
-	"github.com/mezni/bridge/tools/cdrgen/infrastructure"
 	"github.com/mezni/bridge/tools/cdrgen/domain"
+	"github.com/mezni/bridge/tools/cdrgen/infrastructure"
+	"log"
 )
 
 func main() {

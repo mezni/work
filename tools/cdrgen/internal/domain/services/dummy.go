@@ -1,16 +1,16 @@
 package services
 
 import (
-	"github.com/mezni/bridge/tools/cdrgen/internal/infrastructure/logger"
+	"github.com/mezni/bridge/tools/cdrgen/internal/domain/interfaces"
 )
 
 // DummyService is a dummy service that does nothing but logs its actions
 type DummyService struct {
-	logger logger.Logger // Logger is injected into the service
+	logger interfaces.Logger // Logger is injected into the service
 }
 
 // NewDummyService creates a new instance of DummyService with a logger
-func NewDummyService(logger logger.Logger) *DummyService {
+func NewDummyService(logger interfaces.Logger) *DummyService {
 	return &DummyService{
 		logger: logger,
 	}

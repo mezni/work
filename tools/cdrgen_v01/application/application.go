@@ -2,9 +2,9 @@ package application
 
 import (
 	"fmt"
-	"log"
 	"github.com/mezni/bridge/tools/cdrgen/infrastructure"
 	"github.com/spf13/cobra"
+	"log"
 )
 
 // Application handles the business logic for loading config and starting services.

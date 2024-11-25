@@ -1,7 +1,5 @@
 package services
 
-
-
 import (
 	"github.com/mezni/bridge/cdrgen/internal/domain/interfaces"
 	"github.com/mezni/bridge/cdrgen/internal/domain/services"

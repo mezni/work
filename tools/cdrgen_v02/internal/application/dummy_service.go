@@ -2,7 +2,7 @@ package application
 
 import (
 	"context"
-"github.com/mezni/bridge/tools/cdrgen/internal/domain"
+	"github.com/mezni/bridge/tools/cdrgen/internal/domain"
 )
 
 // ApplicationService defines methods for business logic handling

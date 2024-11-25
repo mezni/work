@@ -2,11 +2,11 @@ package infrastructure
 
 import (
 	"fmt"
-	"os"
-	"strings"
-	"path/filepath"
 	"github.com/mezni/bridge/tools/cdrgen/domain"
 	"gopkg.in/yaml.v3"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 // ParseYAMLConfig reads and parses the YAML configuration file.

@@ -23,7 +23,7 @@ test:
 	$(GOTEST) -v ./...
 
 fmt:
-	$(GOFMT) -w $(SRC)
+	$(GOFMT) -w .
 
 vet:
 	$(GOVET) ./...

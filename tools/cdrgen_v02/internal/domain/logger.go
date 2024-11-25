@@ -6,4 +6,3 @@ type Logger interface {
 	Error(msg string, args ...interface{})
 	Debug(msg string, args ...interface{})
 }
-

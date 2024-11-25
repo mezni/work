@@ -1,7 +1,7 @@
 package services
 
 import (
- "github.com/mezni/bridge/cdrgen/internal/domain/interfaces"
+	"github.com/mezni/bridge/cdrgen/internal/domain/interfaces"
 )
 
 // DummyService is a dummy service that does nothing but logs its actions
