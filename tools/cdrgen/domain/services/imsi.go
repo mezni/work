@@ -2,64 +2,57 @@ package services
 
 import (
 	"errors"
-	"fmt"
 	"math/rand"
+	"sync"
 	"time"
-	"github.com/mezni/bridge/tools/cdrgen/domain/valueobjects" 
+	"github.com/mezni/bridge/tools/cdrgen/domain/valueobjects"
+)
+
+const (
+	MCCLength   = 3
+	MNCLength   = 3
+	IMSILength  = 15
 )
 
 var (
-	ErrInvalidMCCMNC                = errors.New("MCC and MNC must be 3 digits")
-	ErrInvalidSubscriberNumberLength = errors.New("subscriber number length must be greater than zero")
+	ErrInvalidMCCMNC                 = errors.New("invalid MCC or MNC: must be exactly 3 numeric characters each")
+	ErrInvalidSubscriberNumberLength = errors.New("subscriber number length must match remaining digits for a valid IMSI")
 )
 
-type IMSIGenerator struct{}
-
-// NewIMSIGenerator creates a new IMSI generator instance
-func NewIMSIGenerator() *IMSIGenerator {
-	return &IMSIGenerator{}
+type IMSIGenerator struct {
+	randSource *rand.Rand
+	mu         sync.Mutex
 }
 
-// GenerateIMSI generates an IMSI based on MCC, MNC, and a random subscriber number of a given length
-func (g *IMSIGenerator) GenerateIMSI(mcc string, mnc string, subscriberNumberLength int) (valueobjects.IMSI, error) {
-	// Validate MCC and MNC (must be 3 digits)
-	if len(mcc) != 3 || len(mnc) != 3 {
+func NewIMSIGenerator() *IMSIGenerator {
+	return &IMSIGenerator{
+		randSource: rand.New(rand.NewSource(time.Now().UnixNano())),
+	}
+}
+
+func (g *IMSIGenerator) GenerateIMSI(mcc, mnc string, subscriberNumberLength int) (valueobjects.IMSI, error) {
+	if len(mcc) != MCCLength || len(mnc) != MNCLength {
 		return valueobjects.IMSI{}, ErrInvalidMCCMNC
 	}
 
-	// Validate the subscriber number length (should be a positive number)
-	if subscriberNumberLength <= 0 {
+	remainingLength := IMSILength - len(mcc) - len(mnc)
+	if subscriberNumberLength != remainingLength {
 		return valueobjects.IMSI{}, ErrInvalidSubscriberNumberLength
 	}
 
-	// Generate a random subscriber number with the specified length
-	subscriberNumber := generateSubscriberNumber(subscriberNumberLength)
-
-	// Construct IMSI (MCC + MNC + Subscriber Number)
+	subscriberNumber := g.generateSubscriberNumber(subscriberNumberLength)
 	imsiValue := mcc + mnc + subscriberNumber
+
 	return valueobjects.NewIMSI(imsiValue)
 }
 
-// generateSubscriberNumber generates a random subscriber number of a given length
-func generateSubscriberNumber(length int) string {
-	// Using rand.Intn directly without re-seeding each time
-	subscriberNumber := fmt.Sprintf("%0"+fmt.Sprintf("%d", length)+"d", rand.Intn(intPow(10, length)))
+func (g *IMSIGenerator) generateSubscriberNumber(length int) string {
+	g.mu.Lock()
+	defer g.mu.Unlock()
 
-	// Ensure the length is correct (pad with leading zeros if necessary)
-	return subscriberNumber
-}
-
-// intPow calculates power of 10 (used to generate random numbers of the given length)
-func intPow(base, exp int) int {
-	result := 1
-	for i := 0; i < exp; i++ {
-		result *= base
+	digits := make([]byte, length)
+	for i := 0; i < length; i++ {
+		digits[i] = byte('0' + g.randSource.Intn(10))
 	}
-	return result
-}
-
-// Ensure random seed is set once at the start of the program (in main or init).
-func init() {
-	// This ensures rand is seeded once, at program start
-	rand.Seed(time.Now().UnixNano())
+	return string(digits)
 }

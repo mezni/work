@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"math/rand"
-	"time"
 	"strconv"
+	"time"
 )
 
 // GenerateRandomIMSI generates a random IMSI (International Mobile Subscriber Identity)
@@ -55,8 +55,8 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	// Define inputs for IMSI generation
-	countryCode := "216"    // MCC for Tunisia
-	operatorCode := "01"    // Example MNC for an operator in Tunisia
+	countryCode := "216" // MCC for Tunisia
+	operatorCode := "01" // Example MNC for an operator in Tunisia
 
 	// Generate IMSI and IMEI
 	imsi := GenerateRandomIMSI(countryCode, operatorCode)

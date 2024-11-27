@@ -8,9 +8,9 @@ import (
 
 // MSISDNConfig holds the input values for country code, operator prefixes, and number format
 type MSISDNConfig struct {
-	CountryCode     string   // Country code for the phone number
+	CountryCode      string   // Country code for the phone number
 	OperatorPrefixes []string // List of operator prefixes
-	NumberFormat    string   // Format for the subscriber number (e.g., %07d)
+	NumberFormat     string   // Format for the subscriber number (e.g., %07d)
 }
 
 // GenerateRandomMSISDN generates a random MSISDN based on the MSISDNConfig struct
@@ -31,9 +31,9 @@ func GenerateRandomMSISDN(config MSISDNConfig) string {
 func main() {
 	// Define the MSISDNConfig struct with input values
 	config := MSISDNConfig{
-		CountryCode:     "+216",                     // Country code for Tunisia
+		CountryCode:      "+216",                                                   // Country code for Tunisia
 		OperatorPrefixes: []string{"22", "23", "24", "25", "26", "27", "28", "29"}, // Operator prefixes
-		NumberFormat:    "%07d",                     // Format for the subscriber number (7 digits)
+		NumberFormat:     "%07d",                                                   // Format for the subscriber number (7 digits)
 	}
 
 	// Generate and print a random MSISDN

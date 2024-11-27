@@ -15,7 +15,6 @@ var (
 )
 
 func NewIMSI(value string) (IMSI, error) {
-	// Validate IMSI format (e.g., length, numeric characters)
 	if len(value) != 15 {
 		return IMSI{}, ErrInvalidIMSILength
 	}
