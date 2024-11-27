@@ -17,5 +17,7 @@ func main() {
 	// Generate IMSI and IMEI using the application layer
 	application.GenerateIMSI(ctx, logger)
 	application.GenerateIMEI(ctx, logger)
-application.GenerateMSISDN(ctx, logger)
+	application.GenerateMSISDN(ctx, logger)
+	application.GenerateIP(ctx, logger)
+	application.GenerateDatetime(ctx, logger)
 }

@@ -5,7 +5,6 @@ import (
 	"log/slog"
 )
 
-
 type SlogLogger struct {
 	logger *slog.Logger
 }
