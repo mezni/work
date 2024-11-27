@@ -27,3 +27,9 @@ func (rg *RandomGenerator) GenerateRandomDigits(length int) string {
 	}
 	return string(digits)
 }
+
+func (g *RandomGenerator) NextInt64(max int64) int64 {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	return g.randSource.Int63n(max) // Generates random number in [0, max)
+}
