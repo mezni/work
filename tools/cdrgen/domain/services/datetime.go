@@ -21,14 +21,10 @@ func (g *DatetimeGenerator) GenerateRandomDatetime(start, end time.Time) (time.T
 		return time.Time{}, ErrInvalidDateRange
 	}
 
-	// Calculate the range in seconds
+	// Use RandomGenerator's NextInt64 to get a random offset
 	duration := end.Unix() - start.Unix()
-	if duration < 0 {
-		return time.Time{}, ErrInvalidDateRange
-	}
+	randomOffset := g.randomGenerator.NextInt64(duration)
 
-	// Generate a random offset
-	randomOffset := g.randomGenerator.randSource.Int63n(duration)
 	return time.Unix(start.Unix()+randomOffset, 0).UTC(), nil
 }
 
