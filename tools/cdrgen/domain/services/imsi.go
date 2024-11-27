@@ -47,12 +47,5 @@ func (g *IMSIGenerator) GenerateIMSI(mcc, mnc string, subscriberNumberLength int
 }
 
 func (g *IMSIGenerator) generateSubscriberNumber(length int) string {
-	g.mu.Lock()
-	defer g.mu.Unlock()
-
-	digits := make([]byte, length)
-	for i := 0; i < length; i++ {
-		digits[i] = byte('0' + g.randSource.Intn(10))
-	}
-	return string(digits)
+	return generateRandomDigits(length, g.randSource, &g.mu)
 }

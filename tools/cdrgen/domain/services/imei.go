@@ -52,14 +52,7 @@ func (g *IMEIGenerator) GenerateIMEI(tac string, serialNumberLength int) (string
 
 // generateSerialNumber generates a random serial number of the given length
 func (g *IMEIGenerator) generateSerialNumber(length int) string {
-	g.mu.Lock()
-	defer g.mu.Unlock()
-
-	digits := make([]byte, length)
-	for i := 0; i < length; i++ {
-		digits[i] = byte('0' + g.randSource.Intn(10))
-	}
-	return string(digits)
+	return generateRandomDigits(length, g.randSource, &g.mu)
 }
 
 // calculateCheckDigit calculates the Luhn check digit for the IMEI number
