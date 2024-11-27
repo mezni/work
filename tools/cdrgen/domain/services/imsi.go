@@ -2,16 +2,13 @@ package services
 
 import (
 	"errors"
-	"math/rand"
-	"sync"
-	"time"
 	"github.com/mezni/bridge/tools/cdrgen/domain/valueobjects"
 )
 
 const (
-	MCCLength   = 3
-	MNCLength   = 3
-	IMSILength  = 15
+	IMSILength = 15
+	MCCLength  = 3
+	MNCLength  = 3
 )
 
 var (
@@ -20,14 +17,11 @@ var (
 )
 
 type IMSIGenerator struct {
-	randSource *rand.Rand
-	mu         sync.Mutex
+	randomGenerator *RandomGenerator
 }
 
 func NewIMSIGenerator() *IMSIGenerator {
-	return &IMSIGenerator{
-		randSource: rand.New(rand.NewSource(time.Now().UnixNano())),
-	}
+	return &IMSIGenerator{randomGenerator: NewRandomGenerator()}
 }
 
 func (g *IMSIGenerator) GenerateIMSI(mcc, mnc string, subscriberNumberLength int) (valueobjects.IMSI, error) {
@@ -35,17 +29,12 @@ func (g *IMSIGenerator) GenerateIMSI(mcc, mnc string, subscriberNumberLength int
 		return valueobjects.IMSI{}, ErrInvalidMCCMNC
 	}
 
-	remainingLength := IMSILength - len(mcc) - len(mnc)
-	if subscriberNumberLength != remainingLength {
+	if len(mcc)+len(mnc)+subscriberNumberLength != IMSILength {
 		return valueobjects.IMSI{}, ErrInvalidSubscriberNumberLength
 	}
 
-	subscriberNumber := g.generateSubscriberNumber(subscriberNumberLength)
+	subscriberNumber := g.randomGenerator.GenerateRandomDigits(subscriberNumberLength)
 	imsiValue := mcc + mnc + subscriberNumber
 
 	return valueobjects.NewIMSI(imsiValue)
-}
-
-func (g *IMSIGenerator) generateSubscriberNumber(length int) string {
-	return generateRandomDigits(length, g.randSource, &g.mu)
 }

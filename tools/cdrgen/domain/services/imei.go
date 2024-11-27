@@ -2,76 +2,32 @@ package services
 
 import (
 	"errors"
-	"math/rand"
-	"sync"
-	"time"
-	"strconv"
+	"github.com/mezni/bridge/tools/cdrgen/domain/valueobjects"
 )
 
-const (
-	TACLength   = 8
-	SerialNumberLength = 6
-	IMEILength = 15
-)
+const IMEILength = 15
 
-var (
-	ErrInvalidTAC = errors.New("TAC must be exactly 8 numeric digits")
-	ErrInvalidSerialNumberLength = errors.New("serial number length must match remaining digits for a valid IMEI")
-)
+var ErrInvalidTAC = errors.New("invalid TAC: must be 8 numeric characters")
 
 type IMEIGenerator struct {
-	randSource *rand.Rand
-	mu         sync.Mutex
+	randomGenerator *RandomGenerator
 }
 
 func NewIMEIGenerator() *IMEIGenerator {
-	return &IMEIGenerator{
-		randSource: rand.New(rand.NewSource(time.Now().UnixNano())),
-	}
+	return &IMEIGenerator{randomGenerator: NewRandomGenerator()}
 }
 
-// GenerateIMEI generates the IMEI number
-func (g *IMEIGenerator) GenerateIMEI(tac string, serialNumberLength int) (string, error) {
-	if len(tac) != TACLength {
-		return "", ErrInvalidTAC
+func (g *IMEIGenerator) GenerateIMEI(tac string, serialNumberLength int) (valueobjects.IMEI, error) {
+	if len(tac) != 8 {
+		return valueobjects.IMEI{}, ErrInvalidTAC
 	}
 
-	remainingLength := IMEILength - len(tac) - 1 // Minus 1 for the check digit
-	if serialNumberLength != remainingLength {
-		return "", ErrInvalidSerialNumberLength
+	if len(tac)+serialNumberLength+1 != IMEILength {
+		return valueobjects.IMEI{}, ErrInvalidSubscriberNumberLength
 	}
 
-	serialNumber := g.generateSerialNumber(serialNumberLength)
-	imeiWithoutCheckDigit := tac + serialNumber
+	serialNumber := g.randomGenerator.GenerateRandomDigits(serialNumberLength)
+	imeiValue := tac + serialNumber + "0" // Placeholder checksum
 
-	checkDigit := g.calculateCheckDigit(imeiWithoutCheckDigit)
-	imei := imeiWithoutCheckDigit + strconv.Itoa(checkDigit)
-
-	return imei, nil
-}
-
-// generateSerialNumber generates a random serial number of the given length
-func (g *IMEIGenerator) generateSerialNumber(length int) string {
-	return generateRandomDigits(length, g.randSource, &g.mu)
-}
-
-// calculateCheckDigit calculates the Luhn check digit for the IMEI number
-func (g *IMEIGenerator) calculateCheckDigit(imei string) int {
-	var sum int
-	for i, digit := range imei {
-		digitInt, _ := strconv.Atoi(string(digit))
-		if i%2 == 0 {
-			sum += digitInt
-		} else {
-			doubled := digitInt * 2
-			if doubled > 9 {
-				sum += doubled - 9
-			} else {
-				sum += doubled
-			}
-		}
-	}
-
-	checkDigit := (10 - (sum % 10)) % 10
-	return checkDigit
+	return valueobjects.NewIMEI(imeiValue)
 }

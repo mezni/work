@@ -10,12 +10,12 @@ func main() {
 	// Create a new logger instance
 	logger := logging.NewSlogLogger("CdrGen")
 
-	// Create a context, optionally with values
+	// Create a context with a request ID
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, "requestID", "12345") // Adding requestID to the context
+	ctx = context.WithValue(ctx, "requestID", "12345")
 
-
-	// Call the function that generates and uses an IMSI, passing the logger and context
-	application.GenerateAndUseIMSI(ctx, logger)
-	application.GenerateAndUseIMEI(ctx, logger)
+	// Generate IMSI and IMEI using the application layer
+	application.GenerateIMSI(ctx, logger)
+	application.GenerateIMEI(ctx, logger)
+application.GenerateMSISDN(ctx, logger)
 }

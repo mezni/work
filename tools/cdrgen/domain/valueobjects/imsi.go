@@ -5,23 +5,23 @@ import (
 	"strconv"
 )
 
+var (
+	ErrInvalidIMSILength = errors.New("invalid IMSI: must be 15 digits")
+)
+
 type IMSI struct {
 	value string
 }
-
-var (
-	ErrInvalidIMSILength    = errors.New("invalid IMSI: must be 15 digits")
-	ErrInvalidIMSICaracters = errors.New("invalid IMSI: must be numeric")
-)
 
 func NewIMSI(value string) (IMSI, error) {
 	if len(value) != 15 {
 		return IMSI{}, ErrInvalidIMSILength
 	}
-	_, err := strconv.Atoi(value)
-	if err != nil {
-		return IMSI{}, ErrInvalidIMSICaracters
+
+	if _, err := strconv.Atoi(value); err != nil {
+		return IMSI{}, ErrInvalidIMSILength
 	}
+
 	return IMSI{value: value}, nil
 }
 

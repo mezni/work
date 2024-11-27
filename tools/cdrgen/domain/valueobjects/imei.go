@@ -5,23 +5,23 @@ import (
 	"strconv"
 )
 
+var (
+	ErrInvalidIMEILength = errors.New("invalid IMEI: must be 15 digits")
+)
+
 type IMEI struct {
 	value string
 }
-
-var (
-	ErrInvalidIMEILength    = errors.New("invalid IMEI: must be 15 digits")
-	ErrInvalidIMEICaracters = errors.New("invalid IMEI: must be numeric")
-)
 
 func NewIMEI(value string) (IMEI, error) {
 	if len(value) != 15 {
 		return IMEI{}, ErrInvalidIMEILength
 	}
-	_, err := strconv.Atoi(value)
-	if err != nil {
-		return IMEI{}, ErrInvalidIMEICaracters
+
+	if _, err := strconv.Atoi(value); err != nil {
+		return IMEI{}, ErrInvalidIMEILength
 	}
+
 	return IMEI{value: value}, nil
 }
 
