@@ -1,78 +1,46 @@
 import csv
 import random
-from datetime import datetime, timedelta
+from datetime import datetime
 
-def generate_dates(start_date, end_date):
-    current_date = start_date.replace(day=1)  # Start from the first day of the month
-    results = []
+# Define the start and end years
+start_year = 2020  # Adjust as needed
+end_year = 2025    # Adjust as needed
 
-    while current_date <= end_date:
-        year_curr = str(current_date.year)[-2:]
-        year_prev = str(current_date.year - 1)[-2:]
-        year_next = str(current_date.year + 1)[-2:]
+# Get the current year and month for comparison
+current_year = datetime.now().year
+current_month = datetime.now().month
 
-        # Determine financial year
-        if current_date.month >= 4:
-            financial_year = f"{year_curr}{year_next}"
-        else:
-            financial_year = f"{year_prev}{year_curr}"
-        
-        month = f"{current_date.month:02d}"  # Format month as 2 digits
-        results.append({"financial_year": financial_year, "month": month})
+# Create a list to hold the data
+data = []
 
-        # Move to the next month
-        next_month = current_date.month % 12 + 1
-        next_year = current_date.year + (1 if current_date.month == 12 else 0)
-        current_date = current_date.replace(year=next_year, month=next_month)
+# Generate data with an additional loop for unitadm
+for unitadm in range(2):
+    for year in range(start_year, end_year + 1):
+        for month in range(1, 13):
+            financial_year_start = year if month >= 4 else year - 1
+            financial_year_end = financial_year_start + 1
+            financial_year_str = f"{str(financial_year_start)[-2:]}{str(financial_year_end)[-2:]}"
+            
+            # Set MontantTrx to 0 if month > current_month and year > current_year
+            if (year > current_year) or (year == current_year and month > current_month):
+                montant_trx = 0
+            else:
+                # Otherwise, generate a random number between 100 and 1000
+                montant_trx = random.randint(100, 1000)
+            
+            # Add the data to the list
+            data.append([unitadm + 1, year, month, financial_year_str, montant_trx])
 
-    return results
+# Sort the data by year, month, and then unitadm
+data.sort(key=lambda x: (x[1], x[2], x[0]))
 
-def generate_transactions(dates, current_fy, current_month, filename):
-    transactions = []
+# Write data to a CSV file
+file_name = "transactions.csv"
+with open(file_name, mode="w", newline="") as file:
+    writer = csv.writer(file)
+    # Write the header in French, including the new column "MontantTrx"
+    writer.writerow(["UniteAdm", "Annee", "Mois", "AnneeFinanciere", "MontantTrx"])
+    # Write the sorted data rows
+    writer.writerows(data)
 
-    # Convert current_fy and current_month to integers for comparison
-    current_fy_int = int(current_fy)
-    current_month_int = int(current_month)
-
-    for unite_adm in range(2):  # Two administrative units
-        for d in dates:
-            transaction_financial_year = d["financial_year"]
-            transaction_month = d["month"]
-
-            # Convert financial year and month to integers for proper comparison
-            transaction_fy_int = int(transaction_financial_year)
-            transaction_month_int = int(transaction_month)
-
-            transaction_amount = 0
-
-            # Generate transaction amount based on financial year and month
-            if current_fy_int > transaction_fy_int or (current_fy_int == transaction_fy_int and current_month_int >= transaction_month_int):
-                transaction_amount = random.randint(0, 1000)
-
-            transactions.append([transaction_financial_year, transaction_month, unite_adm + 1, transaction_amount])
-
-    # Sort the transactions by "AnneeFinanciere", "MoisFinancier", and "UniteAdm"
-    transactions_sorted = sorted(transactions, key=lambda x: (x[0], x[1], x[2]))
-
-    # Write sorted transactions to CSV
-    with open(filename, mode="w", newline="") as file:
-        writer = csv.writer(file, quoting=csv.QUOTE_MINIMAL)
-        writer.writerow(["AnneeFinanciere", "MoisFinancier", "UniteAdm", "SommeTransactions"])
-        writer.writerows(transactions_sorted)
-
-# Current date and financial year calculation
-current_date = datetime.now().date()
-if current_date.month >= 4:
-    current_fy = f"{str(current_date.year)[-2:]}{str(current_date.year + 1)[-2:]}"
-else:
-    current_fy = f"{str(current_date.year - 1)[-2:]}{str(current_date.year)[-2:]}"
-current_month = str(current_date.month)
-
-# Generate dates and transactions
-start_date = datetime(2021, 1, 1)
-end_date = datetime(2025, 12, 31)
-dates = generate_dates(start_date, end_date)
-filename = "transactions.csv"
-generate_transactions(dates, current_fy, current_month, filename)
-
-print(f"CSV file '{filename}' generated successfully.")
+print(f"CSV file '{file_name}' has been created successfully!")
