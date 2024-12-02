@@ -35,17 +35,17 @@ for cost_center, base_value in cost_centers.items():
     transactions = trend + seasonality + noise
     transactions = np.clip(transactions, 0, None)  # Ensure no negative values
     
-    # For MontantProvisions, use a different trend
-    provision_trend = np.linspace(base_value * 0.5, base_value * 1.5, len(dates))  # Different linear trend for provisions
+    # For Montantprevisions, use a different trend
+    provision_trend = np.linspace(base_value * 0.5, base_value * 1.5, len(dates))  # Different linear trend for previsions
     provision_seasonality = (base_value * 0.15) * np.sin(np.linspace(0, 3 * np.pi, len(dates)))  # Different seasonal effect
     provision_noise = np.random.normal(0, base_value * 0.1, len(dates))  # Different noise level
     
-    # Calculate MontantProvisions
-    provisions = provision_trend + provision_seasonality + provision_noise
-    provisions = np.clip(provisions, 0, None)  # Ensure no negative values
+    # Calculate Montantprevisions
+    previsions = provision_trend + provision_seasonality + provision_noise
+    previsions = np.clip(previsions, 0, None)  # Ensure no negative values
     
     # Append data for each month
-    for date, total_transactions, total_provisions in zip(dates, transactions, provisions):
+    for date, total_transactions, total_previsions in zip(dates, transactions, previsions):
         # Determine financial year
         if date.month < 4:  # January to March
             fy_start = date.year - 1
@@ -66,14 +66,14 @@ for cost_center, base_value in cost_centers.items():
             "MontantTrx": int(total_transactions)      # Transaction Amount
         })
         
-        # Add prevision data with the calculated MontantProvisions
+        # Add prevision data with the calculated Montantprevisions
         previsions_data.append({
             "UniteAdmID": cost_center_ids[cost_center],  # Cost Center ID
             "Annee": date.year,                         # Year
             "Mois": date.month,                        # Month
             "DateDebut": date.to_period('M').start_time,  # First Date of Month
             "AnneeFinanciere": financial_year,          # Financial Year
-            "MontantProvisions": round(total_provisions)  # Provisions with the new trend
+            "Montantprevisions": round(total_previsions)  # previsions with the new trend
         })
 
 # Create DataFrame for transactions
