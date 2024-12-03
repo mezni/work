@@ -1,8 +1,8 @@
-package domain
+package entities
 
 import "sync"
 
-// SequenceGenerator represents a sequence generator in the domain layer.
+// SequenceGenerator represents a sequence generator entity.
 type SequenceGenerator struct {
 	mu      sync.Mutex
 	counter int64
@@ -10,7 +10,7 @@ type SequenceGenerator struct {
 	name    string
 }
 
-// NewSequenceGenerator creates a new instance of SequenceGenerator with a name, initial value, and step.
+// NewSequenceGenerator creates a new SequenceGenerator instance.
 func NewSequenceGenerator(name string, initialValue, step int64) *SequenceGenerator {
 	return &SequenceGenerator{
 		name:    name,
@@ -35,6 +35,14 @@ func (s *SequenceGenerator) Current() int64 {
 	defer s.mu.Unlock()
 
 	return s.counter
+}
+
+// Reset sets the sequence counter to a specified value.
+func (s *SequenceGenerator) Reset(value int64) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.counter = value
 }
 
 // Name returns the name of the sequence.
