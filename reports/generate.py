@@ -1,9 +1,10 @@
 import pandas as pd
 import numpy as np
+from datetime import datetime
 
 # Parameters for financial transactions
-start_date = "2020-01-01"
-end_date = "2025-12-31"
+start_date = "2020-04-01"
+end_date = "2026-03-31"
 cost_centers = {
     "Quebec": 200000,       # Base transaction value for Quebec
     "Montreal": 100000,     # Base transaction value for Montreal
@@ -20,9 +21,13 @@ cost_center_ids = {
 # Generate date range for months
 dates = pd.date_range(start=start_date, end=end_date, freq='M')
 
+# Get the current date
+current_date = datetime.today()
+
 # Initialize empty lists to store data for financial transactions and previsions
 data = []
 previsions_data = []
+budget_data = []
 
 # Generate financial transaction data and previsions data for each cost center
 for cost_center, base_value in cost_centers.items():
@@ -35,6 +40,29 @@ for cost_center, base_value in cost_centers.items():
     transactions = trend + seasonality + noise
     transactions = np.clip(transactions, 0, None)  # Ensure no negative values
     
+    # Adjust MontantTrx for the current month
+    for i, date in enumerate(dates):
+        # If the month is the current month and the year is the current year
+        if date.year == current_date.year and date.month == current_date.month:
+            # Number of days in the current month up to today
+            # Correctly calculate days in the current month
+            if current_date.month == 12:
+                # If it's December, next month is January of the next year
+                next_month = 1
+                next_month_year = current_date.year + 1
+            else:
+                next_month = current_date.month + 1
+                next_month_year = current_date.year
+
+            # Get the number of days in the current month
+            days_in_month = (datetime(next_month_year, next_month, 1) - datetime(current_date.year, current_date.month, 1)).days
+            days_passed = current_date.day
+            # Adjust MontantTrx based on the days passed in the current month
+            transactions[i] /= days_in_month / days_passed
+        # If the month is after the current month, set MontantTrx to 0
+        elif date.year > current_date.year or (date.year == current_date.year and date.month > current_date.month):
+            transactions[i] = 0
+
     # For Montantprevisions, use a different trend
     provision_trend = np.linspace(base_value * 0.5, base_value * 1.5, len(dates))  # Different linear trend for previsions
     provision_seasonality = (base_value * 0.15) * np.sin(np.linspace(0, 3 * np.pi, len(dates)))  # Different seasonal effect
@@ -45,7 +73,7 @@ for cost_center, base_value in cost_centers.items():
     previsions = np.clip(previsions, 0, None)  # Ensure no negative values
     
     # Append data for each month
-    for date, total_transactions, total_previsions in zip(dates, transactions, previsions):
+    for i, date in enumerate(dates):
         # Determine financial year
         if date.month < 4:  # January to March
             fy_start = date.year - 1
@@ -63,7 +91,7 @@ for cost_center, base_value in cost_centers.items():
             "Mois": date.month,                        # Month
             "DateDebut": date.to_period('M').start_time,  # First Date of Month
             "AnneeFinanciere": financial_year,          # Financial Year
-            "MontantTrx": int(total_transactions)      # Transaction Amount
+            "MontantTrx": int(transactions[i])      # Transaction Amount
         })
         
         # Add prevision data with the calculated Montantprevisions
@@ -73,7 +101,23 @@ for cost_center, base_value in cost_centers.items():
             "Mois": date.month,                        # Month
             "DateDebut": date.to_period('M').start_time,  # First Date of Month
             "AnneeFinanciere": financial_year,          # Financial Year
-            "Montantprevisions": round(total_previsions)  # previsions with the new trend
+            "Montantprevisions": round(previsions[i])  # Previsions with the new trend
+        })
+        
+        # Calculate MontantBudget for each month (base value multiplied by a random variation)
+        base_monthly_budget = base_value  # Base monthly value (one month's worth)
+        random_variation = np.random.uniform(0.95, 1.05)  # Random fluctuation between 95% and 105%
+        montant_monthly_budget = base_monthly_budget * random_variation
+        
+        # Round the MontantBudget to the nearest thousand
+        montant_monthly_budget_rounded = round(montant_monthly_budget / 1000) * 1000  # Rounds to nearest 1000
+        
+        # Add monthly budget data
+        budget_data.append({
+            "UniteAdmID": cost_center_ids[cost_center],
+            "AnneeFinanciere": financial_year,
+            "DateDebut": date.replace(day=1),  # Use the first day of the month as the start date
+            "MontantBudget": montant_monthly_budget_rounded  # Monthly budget
         })
 
 # Create DataFrame for transactions
@@ -109,38 +153,10 @@ df_uniteadm = pd.DataFrame(uniteadm_data)
 uniteadm_output_file = "uniteadms.csv"
 df_uniteadm.to_csv(uniteadm_output_file, index=False)
 
-# Prepare the data for Budgets (UniteAdmID, AnneeFinanciere, Financial Year Start Date, and MontantBudget)
-budget_data = []
-
-for cost_center, base_value in cost_centers.items():
-    for year in range(2020, 2026):  # Iterate over the financial years in the range
-        if year < 2023:  # For years before 2023, the financial year is the previous one
-            fy_start = year - 1
-            fy_end = year
-        else:  # For years from 2023 onwards, the financial year starts in April
-            fy_start = year
-            fy_end = year + 1
-        
-        financial_year = f"{str(fy_start)[-2:]}{str(fy_end)[-2:]}"
-        fy_start_date = pd.Timestamp(f"{fy_start}-04-01")  # April 1st of the start year
-        
-        # Calculate the budget with slight variation
-        base_budget = base_value * 12  # Monthly base value multiplied by 12 months
-        random_variation = np.random.uniform(0.95, 1.05)  # Random fluctuation between 95% and 105%
-        montant_budget = base_budget * random_variation
-        
-        # Round the MontantBudget to the nearest thousand
-        montant_budget_rounded = round(montant_budget / 1000) * 1000  # Rounds to nearest 1000
-        
-        budget_data.append({
-            "UniteAdmID": cost_center_ids[cost_center],
-            "AnneeFinanciere": financial_year,
-            "DateDebut": fy_start_date,
-            "MontantBudget": montant_budget_rounded  # Use the rounded value
-        })
-
-# Create a DataFrame for the Budgets data
+# Create DataFrame for Budgets data
 df_budgets = pd.DataFrame(budget_data)
+
+# Sort the DataFrame by DateDebut (First Date of Month) and UniteAdmID (Cost Center ID)
 df_budgets = df_budgets.sort_values(by=["DateDebut", "UniteAdmID"])
 
 # Save the Budgets data to a CSV file
@@ -151,7 +167,4 @@ df_budgets.to_csv(budgets_output_file, index=False)
 print(f"Financial transactions CSV saved at: {output_file}")
 print(f"Previsions CSV saved at: {previsions_output_file}")
 print(f"UniteAdmID and UniteAdm CSV saved at: {uniteadm_output_file}")
-print(f"Budgets CSV saved at: {budgets_output_file}")
-
-
 print(f"Budgets CSV saved at: {budgets_output_file}")
