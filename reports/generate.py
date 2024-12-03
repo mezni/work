@@ -152,3 +152,6 @@ print(f"Financial transactions CSV saved at: {output_file}")
 print(f"Previsions CSV saved at: {previsions_output_file}")
 print(f"UniteAdmID and UniteAdm CSV saved at: {uniteadm_output_file}")
 print(f"Budgets CSV saved at: {budgets_output_file}")
+
+
+print(f"Budgets CSV saved at: {budgets_output_file}")
