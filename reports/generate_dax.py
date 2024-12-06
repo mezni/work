@@ -21,3 +21,27 @@ for measure in measures:
         column_name=measure["column_name"]
     )
     print(dax_formula)
+
+
+# Template for a dynamic time-intelligence DAX measure
+template = """
+{measure_name} = 
+CALCULATE(
+    {aggregation_function}('{table_name}'[{column_name}]),
+    DATESYTD('{calendar_table}'[{date_column}])
+)
+"""
+
+# Parameters
+params = {
+    "measure_name": "Total Sales YTD",
+    "aggregation_function": "SUM",
+    "table_name": "SalesTable",
+    "column_name": "SalesAmount",
+    "calendar_table": "Calendar",
+    "date_column": "Date"
+}
+
+# Generate the DAX formula
+dax_formula = template.format(**params)
+print(dax_formula)
