@@ -1,0 +1,9 @@
+measures:
+  - mesure_name: Total Reel
+    mesure_type: SUM
+    table_name: reel
+    column_name: reel
+  - mesure_name: YTD Reel
+    mesure_type: YTD
+    table_name: reel
+    column_name: reel
