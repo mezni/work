@@ -1,0 +1,31 @@
+
+Total Reel = 
+VAR _amount = SUM(reel[reel])
+RETURN 
+    FORMAT(_amount, "### ### ### $")
+
+
+Total Budget = 
+VAR _amount = SUM(budget_prevision[budget])
+RETURN 
+    FORMAT(_amount, "### ### ### $")
+
+
+Total Prevision = 
+VAR _amount = SUM(budget_prevision[prevision])
+RETURN 
+    FORMAT(_amount, "### ### ### $")
+
+
+YTD Reel = 
+CALCULATE(
+    SUM(reel[reel]),
+    DATESYTD(
+        CalendrierFinancier[Date],
+        "03-31"
+    ),
+    FILTER(
+        ALL(CalendrierFinancier[Date]),
+        CalendrierFinancier[Date] >= DATE(YEAR(TODAY()) - 4, 4, 1)
+    )
+)

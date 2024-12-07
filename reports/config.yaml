@@ -1,8 +1,23 @@
-measures:
+calendar:
+  calendar_table_name: "CalendrierFinancier"
+  calendar_column_name: "Date"
+  calendar_start_date: "2020-01-01"
+  calendar_end_date: "2025-12-31"
+  generate: true
+  
+mesures:
   - mesure_name: Total Reel
     mesure_type: SUM
     table_name: reel
     column_name: reel
+  - mesure_name: Total Budget
+    mesure_type: SUM
+    table_name: budget_prevision
+    column_name: budget
+  - mesure_name: Total Prevision
+    mesure_type: SUM
+    table_name: budget_prevision
+    column_name: prevision
   - mesure_name: YTD Reel
     mesure_type: YTD
     table_name: reel
