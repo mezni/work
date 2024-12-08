@@ -1,31 +1,56 @@
 
-Total Reel = 
-VAR _amount = SUM(reel[reel])
-RETURN 
-    FORMAT(_amount, "### ### ### $")
-
-
-Total Budget = 
-VAR _amount = SUM(budget_prevision[budget])
-RETURN 
-    FORMAT(_amount, "### ### ### $")
-
-
-Total Prevision = 
-VAR _amount = SUM(budget_prevision[prevision])
-RETURN 
-    FORMAT(_amount, "### ### ### $")
-
-
-YTD Reel = 
-CALCULATE(
-    SUM(reel[reel]),
-    DATESYTD(
-        CalendrierFinancier[Date],
-        "03-31"
-    ),
-    FILTER(
-        ALL(CalendrierFinancier[Date]),
-        CalendrierFinancier[Date] >= DATE(YEAR(TODAY()) - 4, 4, 1)
+Total Reel over 4years = 
+VAR _start_date = DATE(YEAR(TODAY()) - 3, 4, 1)  
+VAR _end_date = 
+    IF(
+        MONTH(TODAY()) > 4 - 1,  
+        DATE(YEAR(TODAY()) + 1, 3, 31),  
+        DATE(YEAR(TODAY()), 3, 31)  
     )
-)
+RETURN
+    CALCULATE(
+        SUM(reel[reel]),  
+        FILTER(
+            DimCalendrier,
+            DimCalendrier[Date] >= _start_date 
+            && DimCalendrier[Date] <= _end_date
+        )
+    )
+
+
+Total Budget over 4years = 
+VAR _start_date = DATE(YEAR(TODAY()) - 3, 4, 1)  
+VAR _end_date = 
+    IF(
+        MONTH(TODAY()) > 4 - 1,  
+        DATE(YEAR(TODAY()) + 1, 3, 31),  
+        DATE(YEAR(TODAY()), 3, 31)  
+    )
+RETURN
+    CALCULATE(
+        SUM(budget_prevision[budget]),  
+        FILTER(
+            DimCalendrier,
+            DimCalendrier[Date] >= _start_date 
+            && DimCalendrier[Date] <= _end_date
+        )
+    )
+
+
+Total Prevision over 4years = 
+VAR _start_date = DATE(YEAR(TODAY()) - 3, 4, 1)  
+VAR _end_date = 
+    IF(
+        MONTH(TODAY()) > 4 - 1,  
+        DATE(YEAR(TODAY()) + 1, 3, 31),  
+        DATE(YEAR(TODAY()), 3, 31)  
+    )
+RETURN
+    CALCULATE(
+        SUM(budget_prevision[budget]),  
+        FILTER(
+            DimCalendrier,
+            DimCalendrier[Date] >= _start_date 
+            && DimCalendrier[Date] <= _end_date
+        )
+    )

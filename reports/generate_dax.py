@@ -44,25 +44,24 @@ ADDCOLUMNS(
 
 # DAX measures templates
 dax_mesures_template = {
-    "SUM": """
+    "SUMFY": """
 {mesure_name} = 
-VAR _amount = SUM({table_name}[{column_name}])
-RETURN 
-    FORMAT(_amount, {AmountFormat})
-""",
-    "YTD": """
-{mesure_name} = 
-CALCULATE(
-    SUM({table_name}[{column_name}]),
-    DATESYTD(
-        {calendar_table_name}[{calendar_column_name}],
-        {financial_year_last_day}
-    ),
-    FILTER(
-        ALL({calendar_table_name}[{calendar_column_name}]),
-        {calendar_table_name}[{calendar_column_name}] >= DATE(YEAR(TODAY()) - 4, {first_month_calendar_year}, 1)
+VAR _start_date = DATE(YEAR(TODAY()) - 3, {first_month_calendar_year}, 1)  
+VAR _end_date = 
+    IF(
+        MONTH(TODAY()) > {first_month_calendar_year} - 1,  
+        DATE(YEAR(TODAY()) + 1, 3, 31),  
+        DATE(YEAR(TODAY()), 3, 31)  
     )
-)
+RETURN
+    CALCULATE(
+        SUM({table_name}[{column_name}]),  
+        FILTER(
+            {calendar_table_name},
+            {calendar_table_name}[{calendar_column_name}] >= _start_date 
+            && {calendar_table_name}[{calendar_column_name}] <= _end_date
+        )
+    )
 """
 }
 
@@ -125,8 +124,8 @@ def generate_dax_mesures(config):
                 table_name=table_name,
                 column_name=column_name,
                 AmountFormat=AmountFormat,
-                calendar_table_name=config['calendar']['calendar_table_name'],
-                calendar_column_name=config['calendar']['calendar_column_name'],
+                calendar_table_name=calendar_table_name,
+                calendar_column_name=calendar_column_name,
                 financial_year_last_day=financial_year_last_day,
                 first_month_calendar_year=first_month_calendar_year
             )
@@ -144,13 +143,15 @@ def write_to_file(content, file_name):
 
 # Main script
 if __name__ == "__main__":
+    calendar_table_name="DimCalendrier"
+    calendar_column_name="Date"
     config_file_path = "config.yaml"  # Adjust path as necessary
     config = load_yaml_config(config_file_path)
 
     # Generate the DAX calendar
-    generated_dax_calendar = generate_dax_calendar(config)
-    write_to_file(generated_dax_calendar, "DAX_Calendar.dax")
-    print("DAX Calendar written to DAX_Calendar.dax")
+#    generated_dax_calendar = generate_dax_calendar(config)
+#    write_to_file(generated_dax_calendar, "DAX_Calendar.dax")
+#    print("DAX Calendar written to DAX_Calendar.dax")
 
     # Generate the DAX measures
     generated_dax_mesures = generate_dax_mesures(config)

@@ -6,19 +6,15 @@ calendar:
   generate: true
   
 mesures:
-  - mesure_name: Total Reel
-    mesure_type: SUM
-    table_name: reel
-    column_name: reel
-  - mesure_name: Total Budget
-    mesure_type: SUM
-    table_name: budget_prevision
-    column_name: budget
-  - mesure_name: Total Prevision
-    mesure_type: SUM
-    table_name: budget_prevision
-    column_name: prevision
-  - mesure_name: YTD Reel
-    mesure_type: YTD
-    table_name: reel
-    column_name: reel
+  - mesure_name: "Total Reel over 4years"
+    mesure_type: "SUMFY"
+    table_name: "reel"
+    column_name: "reel"
+  - mesure_name: "Total Budget over 4years"
+    mesure_type: "SUMFY"
+    table_name: "budget_prevision"
+    column_name: "budget"
+  - mesure_name: "Total Prevision over 4years"
+    mesure_type: "SUMFY"
+    table_name: "budget_prevision"
+    column_name: "budget"
