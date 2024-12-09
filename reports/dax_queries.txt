@@ -1,0 +1,67 @@
+#------------
+# Current Date starts here
+
+    Current Date = 
+    FORMAT(TODAY(), "dd mmm yyyy", "fr-FR")
+#------------
+
+# First Day FY starts here
+
+    First Day FY = 
+    FORMAT(IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()), 4, 1), DATE(YEAR(TODAY()) - 1, 4, 1)), "dd mmm yyyy", "fr-FR")
+#------------
+
+# Last Day FY starts here
+
+    Last Day FY = 
+    FORMAT(IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()), 3, 31), DATE(YEAR(TODAY()) - 1, 3, 31)), "dd mmm yyyy", "fr-FR")
+#------------
+
+# Month Progression Percentage starts here
+
+    Month Progression Percentage = 
+    VAR _DaysElapsed = TODAY() - DATE(YEAR(TODAY()), MONTH(TODAY()), 1) + 1
+    VAR _TotalDaysInMonth = EOMONTH(TODAY(), 0) - DATE(YEAR(TODAY()), MONTH(TODAY()), 1) + 1
+    RETURN
+        DIVIDE(_DaysElapsed, _TotalDaysInMonth, 0) * 100
+    
+#------------
+
+# FiltreCompte starts here
+
+    FiltreCompte = 
+    SUMMARIZE(
+        FILTER(
+            dimCarteCompte,
+            dimCarteCompte[TypeCompteCtb_CentreCoutCode] IN {"5-3020", "5-0500", "5-1000", "5-3030"}
+        ), 
+        dimCarteCompte[Description], 
+        dimCarteCompte[TypeCompteCtb_CentreCoutCode]
+    )
+    
+#------------
+
+# FiltreAtelier starts here
+
+    FiltreAtelier = 
+    SUMMARIZE(
+        FILTER(
+            dimUniteAdm,
+            dimUniteAdm[estAtelier] = 1 
+        ), 
+        dimUniteAdm[UniteAdmId],
+        dimUniteAdm[Nom]
+    )
+    
+#------------
+
+# Total Reel over 4years starts here
+
+Total Reel over 4years = 
+VAR _amount = SUM(reel[reel])
+VAR _format = IF(ISBLANK("#,##0.00"), _amount, FORMAT(_amount, "#,##0.00"))
+RETURN 
+    _format
+
+#------------
+
