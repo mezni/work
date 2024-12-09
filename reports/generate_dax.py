@@ -44,7 +44,7 @@ ADDCOLUMNS(
 
 # DAX measures templates
 dax_mesures_template = {
-    "SUMFY": """
+    "SUMFYRW": """
 {mesure_name} = 
 VAR _start_date = DATE(YEAR(TODAY()) - 3, {first_month_calendar_year}, 1)  
 VAR _end_date = 
@@ -62,6 +62,71 @@ RETURN
             && {calendar_table_name}[{calendar_column_name}] <= _end_date
         )
     )
+""",
+    "SUMFYOY": """
+{mesure_name} = 
+VAR _year_offset = {year_offset}  
+VAR _start_date = 
+    DATE(
+        YEAR(TODAY()) - _year_offset - IF(MONTH(TODAY()) < {first_month_calendar_year}, 1, 0), 
+        {first_month_calendar_year}, 
+        1
+    )  
+VAR _end_date = 
+    DATE(
+        YEAR(TODAY()) - _year_offset + IF(MONTH(TODAY()) >= {first_month_calendar_year}, 1, 0), 
+        3, 
+        31
+    )  
+RETURN
+    CALCULATE(
+        SUM({table_name}[{column_name}]),
+        FILTER(
+            {calendar_table_name},
+            {calendar_table_name}[{calendar_column_name}] >= _start_date &&
+            {calendar_table_name}[{calendar_column_name}] <= _end_date
+        )
+    )
+""",
+    "YOYFYCR": """
+{mesure_name} = 
+VAR _year_offset = {year_offset}
+VAR _year_0 = 
+    CALCULATE(
+        SUM({table_name}[{column_name}]),
+        FILTER(
+            {calendar_table_name},
+            {calendar_table_name}[{calendar_column_name}] >= DATE(
+                YEAR(TODAY()) - _year_offset - IF(MONTH(TODAY()) < {first_month_calendar_year}, 1, 0), 
+                {first_month_calendar_year}, 
+                1
+            ) &&
+            {calendar_table_name}[{calendar_column_name}] <= DATE(
+                YEAR(TODAY()) - _year_offset + IF(MONTH(TODAY()) >= {first_month_calendar_year}, 1, 0), 
+                3, 
+                31
+            )
+        )
+    )
+VAR _year_1 = 
+    CALCULATE(
+        SUM({table_name}[{column_name}]),
+        FILTER(
+            {calendar_table_name},
+            {calendar_table_name}[{calendar_column_name}] >= DATE(
+                YEAR(TODAY()) - (_year_offset + 1) - IF(MONTH(TODAY()) < {first_month_calendar_year}, 1, 0), 
+                {first_month_calendar_year}, 
+                1
+            ) &&
+            {calendar_table_name}[{calendar_column_name}] <= DATE(
+                YEAR(TODAY()) - (_year_offset + 1) + IF(MONTH(TODAY()) >= {first_month_calendar_year}, 1, 0), 
+                3, 
+                31
+            )
+        )
+    )
+RETURN
+    _year_0 - _year_1
 """
 }
 
@@ -115,6 +180,7 @@ def generate_dax_mesures(config):
         mesure_type = mesure["mesure_type"]
         table_name = mesure["table_name"]
         column_name = mesure["column_name"]
+        year_offset = mesure.get("year_offset", 0)
         
         # Fetch the appropriate template
         dax_mesure_template = dax_mesures_template.get(mesure_type)
@@ -123,6 +189,7 @@ def generate_dax_mesures(config):
                 mesure_name=mesure_name,
                 table_name=table_name,
                 column_name=column_name,
+                year_offset=year_offset,
                 AmountFormat=AmountFormat,
                 calendar_table_name=calendar_table_name,
                 calendar_column_name=calendar_column_name,
@@ -143,15 +210,10 @@ def write_to_file(content, file_name):
 
 # Main script
 if __name__ == "__main__":
-    calendar_table_name="DimCalendrier"
+    calendar_table_name="dimCalendrier"
     calendar_column_name="Date"
     config_file_path = "config.yaml"  # Adjust path as necessary
     config = load_yaml_config(config_file_path)
-
-    # Generate the DAX calendar
-#    generated_dax_calendar = generate_dax_calendar(config)
-#    write_to_file(generated_dax_calendar, "DAX_Calendar.dax")
-#    print("DAX Calendar written to DAX_Calendar.dax")
 
     # Generate the DAX measures
     generated_dax_mesures = generate_dax_mesures(config)

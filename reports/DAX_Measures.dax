@@ -11,9 +11,9 @@ RETURN
     CALCULATE(
         SUM(reel[reel]),  
         FILTER(
-            DimCalendrier,
-            DimCalendrier[Date] >= _start_date 
-            && DimCalendrier[Date] <= _end_date
+            dimCalendrier,
+            dimCalendrier[Date] >= _start_date 
+            && dimCalendrier[Date] <= _end_date
         )
     )
 
@@ -30,9 +30,9 @@ RETURN
     CALCULATE(
         SUM(budget_prevision[budget]),  
         FILTER(
-            DimCalendrier,
-            DimCalendrier[Date] >= _start_date 
-            && DimCalendrier[Date] <= _end_date
+            dimCalendrier,
+            dimCalendrier[Date] >= _start_date 
+            && dimCalendrier[Date] <= _end_date
         )
     )
 
@@ -47,10 +47,125 @@ VAR _end_date =
     )
 RETURN
     CALCULATE(
-        SUM(budget_prevision[budget]),  
+        SUM(budget_prevision[prevision]),  
         FILTER(
-            DimCalendrier,
-            DimCalendrier[Date] >= _start_date 
-            && DimCalendrier[Date] <= _end_date
+            dimCalendrier,
+            dimCalendrier[Date] >= _start_date 
+            && dimCalendrier[Date] <= _end_date
         )
     )
+
+
+Total Reel AEC = 
+VAR _year_offset = 0  
+VAR _start_date = 
+    DATE(
+        YEAR(TODAY()) - _year_offset - IF(MONTH(TODAY()) < 4, 1, 0), 
+        4, 
+        1
+    )  
+VAR _end_date = 
+    DATE(
+        YEAR(TODAY()) - _year_offset + IF(MONTH(TODAY()) >= 4, 1, 0), 
+        3, 
+        31
+    )  
+RETURN
+    CALCULATE(
+        SUM(reel[reel]),
+        FILTER(
+            dimCalendrier,
+            dimCalendrier[Date] >= _start_date &&
+            dimCalendrier[Date] <= _end_date
+        )
+    )
+
+
+Total Budget AEC = 
+VAR _year_offset = 0  
+VAR _start_date = 
+    DATE(
+        YEAR(TODAY()) - _year_offset - IF(MONTH(TODAY()) < 4, 1, 0), 
+        4, 
+        1
+    )  
+VAR _end_date = 
+    DATE(
+        YEAR(TODAY()) - _year_offset + IF(MONTH(TODAY()) >= 4, 1, 0), 
+        3, 
+        31
+    )  
+RETURN
+    CALCULATE(
+        SUM(budget_prevision[budget]),
+        FILTER(
+            dimCalendrier,
+            dimCalendrier[Date] >= _start_date &&
+            dimCalendrier[Date] <= _end_date
+        )
+    )
+
+
+Total Budget AEC = 
+VAR _year_offset = 0  
+VAR _start_date = 
+    DATE(
+        YEAR(TODAY()) - _year_offset - IF(MONTH(TODAY()) < 4, 1, 0), 
+        4, 
+        1
+    )  
+VAR _end_date = 
+    DATE(
+        YEAR(TODAY()) - _year_offset + IF(MONTH(TODAY()) >= 4, 1, 0), 
+        3, 
+        31
+    )  
+RETURN
+    CALCULATE(
+        SUM(budget_prevision[prevision]),
+        FILTER(
+            dimCalendrier,
+            dimCalendrier[Date] >= _start_date &&
+            dimCalendrier[Date] <= _end_date
+        )
+    )
+
+
+Total Reel AEC vs LY = 
+VAR _year_offset = 0
+VAR _year_0 = 
+    CALCULATE(
+        SUM(reel[reel]),
+        FILTER(
+            dimCalendrier,
+            dimCalendrier[Date] >= DATE(
+                YEAR(TODAY()) - _year_offset - IF(MONTH(TODAY()) < 4, 1, 0), 
+                4, 
+                1
+            ) &&
+            dimCalendrier[Date] <= DATE(
+                YEAR(TODAY()) - _year_offset + IF(MONTH(TODAY()) >= 4, 1, 0), 
+                3, 
+                31
+            )
+        )
+    )
+VAR _year_1 = 
+    CALCULATE(
+        SUM(reel[reel]),
+        FILTER(
+            dimCalendrier,
+            dimCalendrier[Date] >= DATE(
+                YEAR(TODAY()) - (_year_offset + 1) - IF(MONTH(TODAY()) < 4, 1, 0), 
+                4, 
+                1
+            ) &&
+            dimCalendrier[Date] <= DATE(
+                YEAR(TODAY()) - (_year_offset + 1) + IF(MONTH(TODAY()) >= 4, 1, 0), 
+                3, 
+                31
+            )
+        )
+    )
+RETURN
+    _year_0 - _year_1

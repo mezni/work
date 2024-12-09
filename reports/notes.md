@@ -60,3 +60,10 @@ DIVIDE (
     [YOY_Reel_FY],
     [TOT_Reel_FY] 
 )
+
+
+
+# Functions
+# SUMFYRW: SUM Financial Year Rolling Window
+# SUMFYOY: SUM Financial Year Over Year
+# YOYFYCR: YoY current year
