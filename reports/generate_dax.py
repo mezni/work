@@ -10,28 +10,22 @@ def read_yaml_file(file_path):
 # Function to create the output file
 def create_output_file(file_path):
     """Creates the output file and writes a section header."""
-    with open(file_path, 'w') as file:  # Open the file in write mode (this creates the file)
-        file.write("#------------\n")  # Initial section header
+    with open(file_path, 'w') as file:
+        file.write("#------------\n")
 
 # Function to append DAX query to file
 def write_dax_query_to_file(file_path, query, dax_measure):
-    """Appends the DAX query to the specified file with a section header"""
+    """Appends the DAX query to the specified file with a section header."""
     with open(file_path, 'a') as file:
-        file.write(f"# {query} starts here\n")
+        file.write(f"# {query}\n")
         file.write(dax_measure + '\n')
         file.write("#------------\n\n")
 
-# Define the components for the FiltreCompte query
-filtre_compte_table_name = "dimCarteCompte"
-filtre_compte_column1 = "Description"
-filtre_compte_column2 = "TypeCompteCtb_CentreCoutCode"
-filtre_compte_filter_values = {"5-0500", "5-1000", "5-3020", "5-3030"}
+# Table and column definitions
+calendar_table_name = "dimCalendrier"
+calendar_date_column = "Date"
 
-# Define the calendar table components
-calendar_table_name = "CalendrierFinancier"
-calendar_column_name = "Date"
-
-# Define the list of DAX queries (now renamed to dax_utils), without explicit names
+# Predefined DAX utilities
 dax_utils = [
     '''
     Current Date = 
@@ -42,92 +36,152 @@ dax_utils = [
     '''
     Last Day FY = 
     FORMAT(IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()), 3, 31), DATE(YEAR(TODAY()) - 1, 3, 31)), "dd mmm yyyy", "fr-FR")''',
-    '''
-    Month Progression Percentage = 
-    VAR _DaysElapsed = TODAY() - DATE(YEAR(TODAY()), MONTH(TODAY()), 1) + 1
-    VAR _TotalDaysInMonth = EOMONTH(TODAY(), 0) - DATE(YEAR(TODAY()), MONTH(TODAY()), 1) + 1
-    RETURN
-        DIVIDE(_DaysElapsed, _TotalDaysInMonth, 0) * 100
-    ''',
-    f'''
-    FiltreCompte = 
-    SUMMARIZE(
-        FILTER(
-            {filtre_compte_table_name},
-            {filtre_compte_table_name}[{filtre_compte_column2}] IN {"{" + ', '.join(f'"{value}"' for value in filtre_compte_filter_values) + "}"}
-        ), 
-        {filtre_compte_table_name}[{filtre_compte_column1}], 
-        {filtre_compte_table_name}[{filtre_compte_column2}]
-    )
-    ''',
-    '''
-    FiltreAtelier = 
-    SUMMARIZE(
-        FILTER(
-            dimUniteAdm,
-            dimUniteAdm[estAtelier] = 1 
-        ), 
-        dimUniteAdm[UniteAdmId],
-        dimUniteAdm[Nom]
-    )
-    '''
 ]
 
-# Initialize an empty dictionary for DAX measure templates (dax_mesures_templates)
+# DAX measure templates
 dax_mesures_templates = {
     "SUM": """
-{mesure_name} = 
-VAR _amount = SUM({table_name}[{column_name}])
-VAR _format = IF(ISBLANK({mesure_format}), _amount, FORMAT(_amount, {mesure_format}))
-RETURN 
-    _format
-"""
+    {mesure_name} = 
+    VAR _amount = SUM({table_name}[{column_name}])
+    RETURN IF(
+        ISBLANK({mesure_format}),
+        _amount,
+        FORMAT(_amount, {mesure_format})
+    )
+    """,
+    "SUM4FY": """
+    {mesure_name} = 
+    VAR _year_window = 4
+    VAR _start_date = DATE(YEAR(TODAY()) - _year_window, 4, 1)
+    VAR _end_date = IF(
+        MONTH(TODAY()) >= 4,
+        DATE(YEAR(TODAY()) + 1, 3, 31),
+        DATE(YEAR(TODAY()), 3, 31)
+    )
+    RETURN
+        CALCULATE(
+            SUM({table_name}[{column_name}]),
+            FILTER(
+                {calendar_table},
+                {calendar_table}[{date_column}] >= _start_date &&
+                {calendar_table}[{date_column}] <= _end_date
+            )
+        )
+    """,
+    "SUMCFY": """
+    {mesure_name} =
+    VAR _start_date =
+        IF(
+            MONTH(TODAY()) >= 4, 
+            DATE(YEAR(TODAY()), 4, 1), 
+            DATE(YEAR(TODAY()) - 1, 4, 1)
+        )
+    VAR _end_date =
+        IF(
+            MONTH(TODAY()) >= 4, 
+            DATE(YEAR(TODAY()) + 1, 3, 31), 
+            DATE(YEAR(TODAY()), 3, 31)
+        )
+    RETURN
+        CALCULATE(
+            SUM({table_name}[{column_name}]),
+            {calendar_table}[{date_column}] >= _start_date &&
+            {calendar_table}[{date_column}] <= _end_date
+        )
+    """,
+    "CFYVS": """
+    {mesure_name} =
+    VAR _start_date =
+        IF(
+            MONTH(TODAY()) >= 4, 
+            DATE(YEAR(TODAY()), 4, 1), 
+            DATE(YEAR(TODAY()) - 1, 4, 1)
+        )
+    VAR _end_date =
+        IF(
+            MONTH(TODAY()) >= 4, 
+            DATE(YEAR(TODAY()) + 1, 3, 31), 
+            DATE(YEAR(TODAY()), 3, 31)
+        )
+    VAR _result1 = CALCULATE(
+        SUM({table_name1}[{column_name1}]),
+        {calendar_table}[{date_column}] >= _start_date &&
+        {calendar_table}[{date_column}] <= _end_date
+    )
+    VAR _result2 = CALCULATE(
+        SUM({table_name2}[{column_name2}]),
+        {calendar_table}[{date_column}] >= _start_date &&
+        {calendar_table}[{date_column}] <= _end_date
+    )
+    RETURN
+        _result1 - _result2
+    """,
 }
 
-# Define the file path
-file_path = 'dax_queries.txt'  # File to store the queries
+# File path for output
+file_path = 'dax_queries.txt'
 
 # Load the YAML configuration
 config = read_yaml_file("config.yaml")
 
-# Create and open the file first, then loop through dax_utils
+# Create and open the file
 create_output_file(file_path)
 
-# Write the DAX queries (dax_utils) to the file
+# Write the DAX utilities to the file
 for query in dax_utils:
-    # Extract the query name based on a pattern or a portion of the query (e.g., the first line)
     query_name = query.split('=')[0].strip()
-
-    # Use the function to write the query to the file
     write_dax_query_to_file(file_path, query_name, query)
 
-# Function to create and write the DAX measures from the YAML configuration
+# Define valid measure types
+valid_mesure_types = dax_mesures_templates.keys()
+
+
+
+
+# Write DAX measures from the YAML configuration
 if "measures" in config:
     for measure in config["measures"]:
-        # Extract values for the current measure
-        query = measure["mesure_name"]
-        measure_type = measure["mesure_type"]
-        table_name = measure["table_name"]
-        column_name = measure["column_name"]
-        
-        # Get the mesure_format from the measure if available, else use an empty string
-        mesure_format = measure.get("mesure_format", "")  # Default to empty string if not provided
+        # Extract measure details
+        mesure_name = measure["mesure_name"]
+        mesure_type = measure["mesure_type"]
 
-        # Check if the measure type is available in dax_templates
-        if measure_type in dax_mesures_templates:
-            dax_measure_template = dax_mesures_templates[measure_type]
 
-            # Format the template with measure details
-            dax_measure = dax_measure_template.format(
-                mesure_name=query,
+        # Handle CFYVS type specifically
+        if mesure_type == "CFYVS":
+            # Ensure table1 and table2 are present
+            table_name1 = measure.get("table_name1")
+            column_name1 = measure.get("column_name1")
+            table_name2 = measure.get("table_name2")
+            column_name2 = measure.get("column_name2")
+
+            # Format the CFYVS template
+            dax_measure = dax_mesures_templates[mesure_type].format(
+                mesure_name=mesure_name,
+                table_name1=table_name1,
+                column_name1=column_name1,
+                table_name2=table_name2,
+                column_name2=column_name2,
+                calendar_table=calendar_table_name,
+                date_column=calendar_date_column
+            )
+        else:
+            # Handle other measure types
+            table_name = measure.get("table_name", "")
+            column_name = measure.get("column_name", "")
+            mesure_format = measure.get("mesure_format", "")
+
+            # Format the template
+            dax_measure = dax_mesures_templates[mesure_type].format(
+                mesure_name=mesure_name,
                 table_name=table_name,
                 column_name=column_name,
-                mesure_format=f'"{mesure_format}"' if mesure_format else '""'  # Ensure it is surrounded by quotes
+                mesure_format=f'"{mesure_format}"' if mesure_format else '""',
+                calendar_table=calendar_table_name,
+                date_column=calendar_date_column
             )
 
-            # Use the function to write the measure to the file
-            write_dax_query_to_file(file_path, query, dax_measure)
-
+        # Write the measure to the file
+        write_dax_query_to_file(file_path, mesure_name, dax_measure)
 else:
     print("Error: 'measures' key is missing in the YAML file.")
 
