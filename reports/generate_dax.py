@@ -36,6 +36,13 @@ dax_utils = [
     '''
     Last Day FY = 
     FORMAT(IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()), 3, 31), DATE(YEAR(TODAY()) - 1, 3, 31)), "dd mmm yyyy", "fr-FR")''',
+    '''
+    Month Progression Percentage = 
+    VAR _DaysElapsed = TODAY() - DATE(YEAR(TODAY()), MONTH(TODAY()), 1) + 1
+    VAR _TotalDaysInMonth = EOMONTH(TODAY(), 0) - DATE(YEAR(TODAY()), MONTH(TODAY()), 1) + 1
+    RETURN
+        DIVIDE(_DaysElapsed, _TotalDaysInMonth, 0) * 100
+    ''',
 ]
 
 # DAX measure templates
@@ -116,6 +123,33 @@ dax_mesures_templates = {
     RETURN
         _result1 - _result2
     """,
+    "CFYVSP": """
+    {mesure_name} =
+    VAR _start_date =
+        IF(
+            MONTH(TODAY()) >= 4, 
+            DATE(YEAR(TODAY()), 4, 1), 
+            DATE(YEAR(TODAY()) - 1, 4, 1)
+        )
+    VAR _end_date =
+        IF(
+            MONTH(TODAY()) >= 4, 
+            DATE(YEAR(TODAY()) + 1, 3, 31), 
+            DATE(YEAR(TODAY()), 3, 31)
+        )
+    VAR _result1 = CALCULATE(
+        SUM({table_name1}[{column_name1}]),
+        {calendar_table}[{date_column}] >= _start_date &&
+        {calendar_table}[{date_column}] <= _end_date
+    )
+    VAR _result2 = CALCULATE(
+        SUM({table_name2}[{column_name2}]),
+        {calendar_table}[{date_column}] >= _start_date &&
+        {calendar_table}[{date_column}] <= _end_date
+    )
+    RETURN
+        DIVIDE (_result1 - _result2,_result1, 0)*100
+    """,
     "CMVS": """
     {mesure_name} =
     VAR _start_date = DATE(YEAR(TODAY()), MONTH(TODAY()), 1)
@@ -132,6 +166,23 @@ dax_mesures_templates = {
     )
     RETURN
         _result1 - _result2
+    """,
+    "CMVSP": """
+    {mesure_name} =
+    VAR _start_date = DATE(YEAR(TODAY()), MONTH(TODAY()), 1)
+    VAR _end_date = EOMONTH(TODAY(), 0)
+    VAR _result1 = CALCULATE(
+        SUM({table_name1}[{column_name1}]),
+        {calendar_table}[{date_column}] >= _start_date &&
+        {calendar_table}[{date_column}] <= _end_date
+    )
+    VAR _result2 = CALCULATE(
+        SUM({table_name2}[{column_name2}]),
+        {calendar_table}[{date_column}] >= _start_date &&
+        {calendar_table}[{date_column}] <= _end_date
+    )
+    RETURN
+        DIVIDE(_result1 - _result2,_result1,0)*100
     """,
 }
 
@@ -164,7 +215,7 @@ if "measures" in config:
 
 
         # Handle CFYVS type specifically
-        if mesure_type in  ["CFYVS","CMVS"]:
+        if mesure_type in  ["CFYVS","CMVS","CFYVSP","CMVSP"]:
             # Ensure table1 and table2 are present
             table_name1 = measure.get("table_name1")
             column_name1 = measure.get("column_name1")
