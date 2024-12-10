@@ -179,3 +179,53 @@
     
 #------------
 
+# Monthly reel vs budget
+
+    Monthly reel vs budget =
+    VAR _start_date =
+        IF(
+            MONTH(TODAY()) >= 4, 
+            DATE(YEAR(TODAY()), 4, 1), 
+            DATE(YEAR(TODAY()) - 1, 4, 1)
+        )
+    VAR _end_date =
+        IF(
+            MONTH(TODAY()) >= 4, 
+            DATE(YEAR(TODAY()) + 1, 3, 31), 
+            DATE(YEAR(TODAY()), 3, 31)
+        )
+    VAR _result1 = CALCULATE(
+        SUM(budget_prevision[budget]),
+        dimCalendrier[Date] >= _start_date &&
+        dimCalendrier[Date] <= _end_date
+    )
+    VAR _result2 = CALCULATE(
+        SUM(None[None]),
+        dimCalendrier[Date] >= _start_date &&
+        dimCalendrier[Date] <= _end_date
+    )
+    RETURN
+        _result1 - _result2
+    
+#------------
+
+# Monthly reel vs prevision
+
+    Monthly reel vs prevision =
+    VAR _start_date = DATE(YEAR(TODAY()), MONTH(TODAY()), 1)
+    VAR _end_date = EOMONTH(TODAY(), 0)
+    VAR _result1 = CALCULATE(
+        SUM(reel[reel]),
+        dimCalendrier[Date] >= _start_date &&
+        dimCalendrier[Date] <= _end_date
+    )
+    VAR _result2 = CALCULATE(
+        SUM(budget_prevision[prevision]),
+        dimCalendrier[Date] >= _start_date &&
+        dimCalendrier[Date] <= _end_date
+    )
+    RETURN
+        _result1 - _result2
+    
+#------------
+

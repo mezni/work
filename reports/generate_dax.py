@@ -116,6 +116,23 @@ dax_mesures_templates = {
     RETURN
         _result1 - _result2
     """,
+    "CMVS": """
+    {mesure_name} =
+    VAR _start_date = DATE(YEAR(TODAY()), MONTH(TODAY()), 1)
+    VAR _end_date = EOMONTH(TODAY(), 0)
+    VAR _result1 = CALCULATE(
+        SUM({table_name1}[{column_name1}]),
+        {calendar_table}[{date_column}] >= _start_date &&
+        {calendar_table}[{date_column}] <= _end_date
+    )
+    VAR _result2 = CALCULATE(
+        SUM({table_name2}[{column_name2}]),
+        {calendar_table}[{date_column}] >= _start_date &&
+        {calendar_table}[{date_column}] <= _end_date
+    )
+    RETURN
+        _result1 - _result2
+    """,
 }
 
 # File path for output
@@ -147,7 +164,7 @@ if "measures" in config:
 
 
         # Handle CFYVS type specifically
-        if mesure_type == "CFYVS":
+        if mesure_type in  ["CFYVS","CMVS"]:
             # Ensure table1 and table2 are present
             table_name1 = measure.get("table_name1")
             column_name1 = measure.get("column_name1")

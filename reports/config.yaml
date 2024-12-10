@@ -32,3 +32,18 @@ measures:
     column_name1: "reel"
     table_name2: "budget_prevision"
     column_name2: "prevision"
+  - mesure_name: "Monthly reel vs budget"
+    mesure_type: "CFYVS"
+    table_name1: "reel"
+    column_name1: "reel"
+    table_name1: "budget_prevision"
+    column_name1: "budget"
+  - mesure_name: "Monthly reel vs prevision"
+    mesure_type: "CMVS"
+    table_name1: "reel"
+    column_name1: "reel"
+    table_name2: "budget_prevision"
+    column_name2: "prevision"
+
+
+    
