@@ -36,12 +36,14 @@ dax_templates = {
             DATE(YEAR(TODAY()) + 1, 3, 31), 
             DATE(YEAR(TODAY()), 3, 31)
         )
-    RETURN
-        CALCULATE(
+    
+    VAR _result = CALCULATE(
             SUM({table_name}[{column_name}]),
             {calendar_table}[{date_column}] >= _start_date &&
             {calendar_table}[{date_column}] <= _end_date
         )
+        RETURN
+         IF(ISBLANK(_result), 0, _result)
     """,
     "SumCurrentFinancialYearVS": """
     {measure_name} =
@@ -175,6 +177,18 @@ dax_templates = {
     RETURN
         DIVIDE (_result1 - _result2,_result1,0)	
     """,
+    "SumCurrentMonth": """
+    {measure_name} =
+    VAR _start_date = DATE(YEAR(TODAY()), MONTH(TODAY()), 1)
+    VAR _end_date = EOMONTH(TODAY(), 0)
+    VAR _result = CALCULATE(
+        SUM({table_name}[{column_name}]),
+        {calendar_table}[{date_column}] >= _start_date &&
+        {calendar_table}[{date_column}] <= _end_date
+    )
+    RETURN
+        IF(ISBLANK(_result), 0, _result)
+    """,
 }
 
 # Separate the params_list into three lists based on measure_type
@@ -215,7 +229,7 @@ params_utils = [
         "measure_name": "Dernier jour AF",  
         "measure_type": "Prompt",  
         "name": "Dernier jour AF",
-        "value": 'FORMAT(IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()), 3, 31), DATE(YEAR(TODAY()) - 1, 3, 31)), "dd mmm yyyy", "fr-FR")'
+        "value": 'FORMAT(IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY())+1, 3, 31), DATE(YEAR(TODAY()) , 3, 31)), "dd mmm yyyy", "fr-FR")'
     },
     {
         "measure_name": "Annee courante",  
@@ -223,7 +237,14 @@ params_utils = [
         "name": "Annee courante",
         "value": 'FORMAT(DATE(YEAR(TODAY()), MONTH(TODAY()), 1), "mmm yyyy", "fr-FR")'
     },
+    {
+        "measure_name": "Journees %",  
+        "measure_type": "Prompt",  
+        "name": "Journees %",
+        "value": 'FORMAT(DIVIDE(DAY(TODAY()), DAY(EOMONTH(TODAY(), 0)), 0) , "0 %")'
+    },
 ]
+
 
 params_mesures = [
     {
@@ -276,6 +297,24 @@ params_mesures = [
         "table_name": "reel",
         "column_name": "reel",
     },
+    {
+        "measure_name": "Réel Mensuel",  
+        "measure_type": "SumCurrentMonth",  
+        "table_name": "reel",
+        "column_name": "reel"
+    },
+    {
+        "measure_name": "Budget Mensuel",  
+        "measure_type": "SumCurrentMonth",  
+        "table_name": "budget_prevision",
+        "column_name": "budget"
+    },
+    {
+        "measure_name": "Prevision Mensuel",  
+        "measure_type": "SumCurrentMonth",  
+        "table_name": "budget_prevision",
+        "column_name": "prevision"
+    },
 ]
 
 params_prompts = [
@@ -288,38 +327,128 @@ params_prompts = [
     {
         "measure_name": "AEC vs budget % Affichage",  
         "measure_type": "Prompt",  
-        "name": "AEC vs budget Affichage",
-        "value": 'FORMAT ([AEC vs budget %],  "0%")'
+        "name": "AEC vs budget % Affichage",
+        "value": '''
+        VAR _UpArrow = UNICHAR(9650)
+        VAR _DownArrow = UNICHAR(9660)
+        VAR _RightArrow = UNICHAR(8594)
+        VAR _SpaceChar = UNICHAR(160)
+        VAR _delta = [AEC vs budget %]
+        RETURN
+            IF(
+                _delta > 0, 
+                _UpArrow &  REPT(_SpaceChar,1) & FORMAT(ABS(_delta), "0%"),  
+                IF(
+                    _delta < 0, 
+                    _DownArrow &  REPT(_SpaceChar,1) & FORMAT(ABS(_delta), "0%"),
+                    _RightArrow &  REPT(_SpaceChar,1) 
+            ))
+        '''
     }, 
     {
         "measure_name": "AEC vs budget Affichage",  
         "measure_type": "Prompt",  
         "name": "AEC vs budget Affichage",
-        "value": 'FORMAT ([AEC vs budget],  "### ### ### $")'
+        "value": '''
+        VAR _UpArrow = UNICHAR(9650)
+        VAR _DownArrow = UNICHAR(9660)
+        VAR _RightArrow = UNICHAR(8594)
+        VAR _SpaceChar = UNICHAR(160)
+        VAR _delta = [AEC vs budget]
+        RETURN
+            IF(
+                _delta > 0, 
+                _UpArrow &  REPT(_SpaceChar,1) & FORMAT(ABS(_delta), "### ### ### $"),  
+                IF(
+                    _delta < 0, 
+                    _DownArrow &  REPT(_SpaceChar,1) & FORMAT(ABS(_delta), "### ### ### $"),
+                    _RightArrow &  REPT(_SpaceChar,1) 
+            ))
+        '''
     }, 
     {
         "measure_name": "AEC vs prevision % Affichage",  
         "measure_type": "Prompt",  
-        "name": "AEC vs prevision Affichage",
-        "value": 'FORMAT ([AEC vs prevision %],  "0%")'
+        "name": "AEC vs prevision % Affichage",
+        "value": '''
+        VAR _UpArrow = UNICHAR(9650)
+        VAR _DownArrow = UNICHAR(9660)
+        VAR _RightArrow = UNICHAR(8594)
+        VAR _SpaceChar = UNICHAR(160)
+        VAR _delta = [AEC vs prevision %]
+        RETURN
+            IF(
+                _delta > 0, 
+                _UpArrow &  REPT(_SpaceChar,1) & FORMAT(ABS(_delta), "0%"),  
+                IF(
+                    _delta < 0, 
+                    _DownArrow &  REPT(_SpaceChar,1) & FORMAT(ABS(_delta), "0%"),
+                    _RightArrow &  REPT(_SpaceChar,1) 
+            ))
+        '''
     }, 
     {
         "measure_name": "AEC vs prevision Affichage",  
         "measure_type": "Prompt",  
         "name": "AEC vs prevision Affichage",
-        "value": 'FORMAT ([AEC vs prevision],  "### ### ### $")'
+        "value": '''
+        VAR _UpArrow = UNICHAR(9650)
+        VAR _DownArrow = UNICHAR(9660)
+        VAR _RightArrow = UNICHAR(8594)
+        VAR _SpaceChar = UNICHAR(160)
+        VAR _delta = [AEC vs prevision]
+        RETURN
+            IF(
+                _delta > 0, 
+                _UpArrow &  REPT(_SpaceChar,1) & FORMAT(ABS(_delta), "### ### ### $"),  
+                IF(
+                    _delta < 0, 
+                    _DownArrow &  REPT(_SpaceChar,1) & FORMAT(ABS(_delta), "### ### ### $"),
+                    _RightArrow &  REPT(_SpaceChar,1) 
+            ))
+        '''
     }, 
     {
         "measure_name": "AEC vs APR % Affichage",  
         "measure_type": "Prompt",  
-        "name": "AEC vs APR Affichage",
-        "value": 'FORMAT ([AEC vs prevision %],  "0%")'
+        "name": "AEC vs APR % Affichage",
+        "value": '''
+        VAR _UpArrow = UNICHAR(9650)
+        VAR _DownArrow = UNICHAR(9660)
+        VAR _RightArrow = UNICHAR(8594)
+        VAR _SpaceChar = UNICHAR(160)
+        VAR _delta = [AEC vs APR %]
+        RETURN
+            IF(
+                _delta > 0, 
+                _UpArrow &  REPT(_SpaceChar,1) & FORMAT(ABS(_delta), "0%"),  
+                IF(
+                    _delta < 0, 
+                    _DownArrow &  REPT(_SpaceChar,1) & FORMAT(ABS(_delta), "0%"),
+                    _RightArrow &  REPT(_SpaceChar,1) 
+            ))
+        '''
     }, 
     {
         "measure_name": "AEC vs APR Affichage",  
         "measure_type": "Prompt",  
         "name": "AEC vs APR Affichage",
-        "value": 'FORMAT ([AEC vs APR],  "### ### ### $")'
+        "value": '''
+        VAR _UpArrow = UNICHAR(9650)
+        VAR _DownArrow = UNICHAR(9660)
+        VAR _RightArrow = UNICHAR(8594)
+        VAR _SpaceChar = UNICHAR(160)
+        VAR _delta = [AEC vs APR]
+        RETURN
+            IF(
+                _delta > 0, 
+                _UpArrow &  REPT(_SpaceChar,1) & FORMAT(ABS(_delta), "### ### ### $"),  
+                IF(
+                    _delta < 0, 
+                    _DownArrow &  REPT(_SpaceChar,1) & FORMAT(ABS(_delta), "### ### ### $"),
+                    _RightArrow &  REPT(_SpaceChar,1) 
+            ))
+        '''
     }, 
 ]
 
@@ -357,7 +486,7 @@ params_titres = [
     {
         "measure_name": "Suivi pour le mois Titre",  
         "measure_type": "Prompt",  
-        "name": "Suivi cumulatif Titre",
+        "name": "Suivi mois Titre",
         "value": '"Suivi pour le mois en cours (" & [Annee courante] & ")"'
     },
 ]
@@ -386,7 +515,8 @@ for params_list in [params_tables , params_utils  , params_mesures ,  params_pro
                     name=params["name"],
                     value=params["value"]
                 )
-            elif params["measure_type"] in [ "SumCurrentFinancialYear", "SumCurrentFinancialYearVSLastYear", "SumCurrentFinancialYearVSLastYear%"]:
+            elif params["measure_type"] in [ "SumCurrentFinancialYear", "SumCurrentFinancialYearVSLastYear", 
+            "SumCurrentFinancialYearVSLastYear%", "SumCurrentMonth"]:
                 dax_query = selected_template.format(
                     measure_name=params["measure_name"],
                     table_name=params["table_name"],
