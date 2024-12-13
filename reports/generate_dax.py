@@ -1,201 +1,59 @@
-def get_unicode_chars(graphics_type: str) -> dict:
-    """
-    Returns a dictionary of Unicode characters for traffic lights or arrows.
+import re
+def generate_standard(name, params):
+    template = params.pop()
+    placeholders = re.findall(r"\{(.*?)\}", template)
 
-    Args:
-        graphics_type (str): The type of graphics. Can be "traffic_lights" or "arrows".
+    measure = template
+    for i, placeholder in enumerate(placeholders):
+        if i < len(params):
+            measure = measure.replace(f"{{{placeholder}}}", str(params[i]))
 
-    Returns:
-        dict: A dictionary containing the Unicode characters for down, steady, and up.
-    """
+    return f"{name} = {measure}"
 
-    if graphics_type == "traffic_lights":
-        return {
-            "_down_char": "UNICHAR ( 128308 )",  # Red circle
-            "_steady_char": "UNICHAR ( 128993 )",  # Yellow circle
-            "_up_char": "UNICHAR ( 128994 )",  # Green circle
-        }
-    elif graphics_type == "arrows":
-        return {
-            "_down_char": "UNICHAR ( 9660 )", #"UNICHAR ( 8595 )",  # Down arrow
-            "_steady_char": "UNICHAR(9679)", #"UNICHAR ( 8596 )",  # Right arrow (used for steady)
-            "_up_char": "UNICHAR ( 9650 )", #"UNICHAR ( 8593 )",  # Up arrow
-        }
+def generate_agg(name, measure_type, params):
+    if measure_type == "SUM":
+        tablename = params[0]
+        columnname = params[1]
+        measure = f"SUM({tablename}[{columnname}])"
+        return f"{name} = {measure}"
+
+def generate_date(name, measure_type, params):
+    if  len(params) == 1:
+        date_format = default_date_format
     else:
-        raise ValueError("Invalid graphics type. Must be 'traffic_lights' or 'arrows'.")
+        date_format = params.pop()
+    expression = params[0]   
+    measure = f"FORMAT({expression},{date_format})"
+    return f"{name} = {measure}"
 
-def generate_dax_total_formula(
-    measure_name: str = "Total",
-    column_name: str = "reel",
-    table_name: str = "reel",
-    value_format: str = "### ### ### $",
-) -> str:
-    """
-    Generates a DAX formula for calculating the total value.
-
-    Args:
-        measure_name (str, optional): The name of the measure. Defaults to "Total".
-        column_name (str, optional): The name of the column. Defaults to "reel".
-        table_name (str, optional): The name of the table. Defaults to "reel".
-        value_format (str, optional): The format for the value. Defaults to "### ### ### $".
-
-    Returns:
-        str: The generated DAX formula.
-    """
-
-    formula = f"""
-    {measure_name} = 
-    VAR _value_format = "{value_format}"
-    VAR _value = SUM({table_name}[{column_name}])
-    RETURN 
-        FORMAT ( _value, _value_format )
-    """
-    return formula
-
-def generate_dax_yoy_formula(
-    measure_name: str,
-    measure_type: str,
-    graphics_type: str = "arrows",
-    year_offset: int = 1,
-    ref_column_name: str = "reel",
-    ref_table_name: str = "reel",
-    over_column_name: str = "reel",
-    over_table_name: str = "reel",
-    date_column_name: str = "Date",
-    date_table_name: str = "dimCalendrier",
-    value_format: str = "### ### ### $",
-    perc_format: str = "0 %",
-) -> str:
-    """
-    Generates a DAX formula for calculating the year-over-year (YoY) difference.
-
-    Args:
-        measure_name (str): The name of the measure.
-        measure_type (str): The type of the measure. Can be "value", "percentage", or "status".
-        graphics_type (str): The type of graphics to use. Can be "traffic_lights" or "arrows".
-        year_offset (int, optional): The year offset. Defaults to 1.
-        ref_column_name (str, optional): The name of the reference column. Defaults to "reel".
-        ref_table_name (str, optional): The name of the reference table. Defaults to "reel".
-        over_column_name (str, optional): The name of the override column. Defaults to "reel".
-        over_table_name (str, optional): The name of the override table. Defaults to "reel".
-        date_column_name (str, optional): The name of the date column. Defaults to "Date".
-        date_table_name (str, optional): The name of the date table. Defaults to "dimCalendrier".
-        value_format (str, optional): The format for the value. Defaults to "### ### ### $".
-        perc_format (str, optional): The format for the percentage. Defaults to "0 %".
-
-    Returns:
-        str: The generated DAX formula.
-    """
-
-    if measure_type not in ["value", "percentage", "status", "graphic"]:
-        raise ValueError("Invalid measure type. Must be 'value', 'percentage', 'status', or 'graphic'")
-
-    if graphics_type not in ["traffic_lights", "arrows"]:
-        raise ValueError("Invalid graphics type. Must be 'traffic_lights' or 'arrows'")
-
-    unicode_chars = get_unicode_chars(graphics_type)
-
-
-    formula = f"""
-    {measure_name} = 
-    VAR _down_char = {unicode_chars["_down_char"]}
-    VAR _steady_char = {unicode_chars["_steady_char"]}
-    VAR _up_char = {unicode_chars["_up_char"]}
-    VAR _measure_type = "{measure_type}"
-    VAR _value_format = "{value_format}"
-    VAR _perc_format = "{perc_format}"
-    VAR _year_offset = {year_offset}
-
-    VAR _ref_year_value = 
-        SUM ( {ref_table_name}[{ref_column_name}] )
-
-    VAR _over_year_value = 
-        CALCULATE (
-            SUM ( {over_table_name}[{over_column_name}] ),
-            DATEADD ( {date_table_name}[{date_column_name}], -_year_offset, YEAR )
-        )
-
-    VAR _diff = 
-        _ref_year_value - _over_year_value
-
-    VAR _pct = 
-        IF (
-            _over_year_value = 0, 
-            BLANK(), 
-            DIVIDE ( _diff, _over_year_value )
-        )
-
-    RETURN 
-        SWITCH (
-            TRUE (),
-            _measure_type = "value", FORMAT ( _diff, _value_format ),
-            _measure_type = "percentage", FORMAT ( _pct, _perc_format ),
-            _measure_type = "status", 
-                IF ( _diff < 0, -1, 
-                    IF ( _diff > 0, 1, 0 ) ),
-            _measure_type = "graphic",  
-                IF ( _diff < 0,  _down_char, 
-                    IF ( _diff > 0, _up_char,  _steady_char )),    
-            BLANK ()
-        )
-    """
-    return formula
+default_date_format='"dd mmm yyyy", "fr-FR"'
+mesures = [
+    {"name": "MsrTotalReel", "type": "SUM", "params": ["reel", "reel"]},
+    {"name": "MsrTotalBudget", "type": "SUM", "params": ["budget_prevision", "budget"]},
+    {"name": "MsrTotalPrevision", "type": "SUM", "params": ["budget_prevision", "prevision"]},
+    {"name": "ClcDateCourante", "type": "DATE", "params": ["TODAY()"]},
+    {"name": "ClcMoisCourant", "type": "DATE", "params": ["TODAY()", '"mmm yyyy", "fr-FR"']},
+    {"name": "ClcPremierJourAF", "type": "DATE", "params": ["IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()), 4, 1), DATE(YEAR(TODAY()) - 1, 4, 1))"]},
+    {"name": "ClcDernierJourAF", "type": "DATE", "params": ["IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()), 3, 31), DATE(YEAR(TODAY()) - 1, 3, 31))"]},
+    {"name": "LblSuiviCumulatif", "type": "STD", "params": ["[ClcPremierJourAF]","[ClcDernierJourAF]","Suivi cumulatif du {first} au {last}"]},
+    {"name": "LblSuiviCumulCompar", "type": "STD", "params": ["[ClcDernierJourAF]","Cumulatif et comparatif au {last}"]},
+    {"name": "LblSuiviMoisEncours", "type": "STD", "params": ["[ClcMoisCourant]", "Suivi pour le mois en cours ({mois})"]},
+    {"name": "LblEnDate", "type": "STD", "params": ["[ClcDateCourante]", "En date du {date}"]},
+]
 
 
 
+for item in mesures:
+    name = item["name"]
+    measure_type = item["type"]
+    params = item["params"]
 
-
-
-# Example usage:
-formula = generate_dax_total_formula(
-    measure_name="Total reel",
-    column_name="reel",
-    table_name="reel",
-)
-print(formula)
-
-
-# Example usage:
-formula = generate_dax_yoy_formula(
-    measure_name="yoy graphic a3",
-    year_offset=3,
-    measure_type="graphic",
-    ref_column_name="reel",
-    ref_table_name="reel",
-    over_column_name="reel",
-    over_table_name="reel",
-)
-print(formula)
-
-formula = generate_dax_yoy_formula(
-    measure_name="yoy graphic a2",
-    year_offset=2,
-    measure_type="graphic",
-    ref_column_name="reel",
-    ref_table_name="reel",
-    over_column_name="reel",
-    over_table_name="reel",
-)
-print(formula)
-
-formula = generate_dax_yoy_formula(
-    measure_name="yoy graphic a1",
-    year_offset=1,
-    measure_type="graphic",
-    ref_column_name="reel",
-    ref_table_name="reel",
-    over_column_name="reel",
-    over_table_name="reel",
-)
-
-
-formula = generate_dax_yoy_formula(
-    measure_name="yoy status a1",
-    year_offset=1,
-    measure_type="status",
-    ref_column_name="reel",
-    ref_table_name="reel",
-    over_column_name="reel",
-    over_table_name="reel",
-)
-print(formula)
+    if measure_type in ["SUM"]:
+        result = generate_agg(name, measure_type, params)  
+        print(f"{result}")
+    elif measure_type in ["DATE"]:
+        result = generate_date(name, measure_type, params)  
+        print(f"{result}")
+    elif measure_type in ["STD"]:
+        result = generate_standard(name, params)  
+        print(f"{result}")
