@@ -12,6 +12,28 @@ def get_unicode_chars(metric_graphic):
             "steady_char":"UNICHAR(128993)",
             "up_char":"UNICHAR(128994)"
         }
+
+def get_mesure_result(metric_type):
+    if metric_type == "value":
+        result = "_result1 - _result2"
+    elif metric_type == "percentage":
+        result = "DIVIDE(_result1 - _result2, _result1, 0)"
+    elif metric_type == "status":
+        result = "IF(_result1 - _result2 < 0, -1, IF(_result1 - _result2 > 0, 1, 0))"
+    else:
+        result=None
+    return result
+
+def get_mesure_expression(metric_format,metric_graphic):
+    if metric_format:
+        if metric_graphic:
+            expression = f"""IF(_result < 0, _down_char, IF(_result > 0, _up_char, _steady_char )) &" "& FORMAT(ABS(_result),"{metric_format}")"""
+        else:
+            expression = f"""FORMAT(_result,"{metric_format}")"""
+    else:
+        expression = f"""_result"""
+    return expression
+
 def generate_pop(config, output_file):
     default_date_table_name = "dimCalendrier"
     default_date_column_name = "Date"
@@ -45,11 +67,15 @@ def generate_pop(config, output_file):
         for metric in metrics:
             metric_type = metric.get("type")  
             metric_graphic = metric.get("graphic") 
+            metric_format = metric.get("format") 
             if metric_graphic:
                 unicode_chars = get_unicode_chars(metric_graphic)
                 down_char = unicode_chars["down_char"]
                 steady_char = unicode_chars["steady_char"]
                 up_char = unicode_chars["up_char"]
+
+            result=get_mesure_result(metric_type)
+            expression=get_mesure_expression(metric_format,metric_graphic)
 
             graphics = """ """
             if metric_graphic:
@@ -57,13 +83,6 @@ def generate_pop(config, output_file):
     VAR _down_char = {down_char}
     VAR _steady_char = {steady_char}
     VAR _up_char = {up_char}"""
-
-            if metric_type == "value":
-                expression = "_result1 - _result2"
-            elif metric_type == "percentage":
-                expression = "DIVIDE(_result1 - _result2, _result1, 0)"
-            elif metric_type == "status":
-                expression = "IF(_result1 - _result2 < 0, -1, IF(_result1 - _result2 > 0, 1, 0))"
 
             template = f"""{graphics}
     VAR _start_date = {start_date}
@@ -80,13 +99,17 @@ def generate_pop(config, output_file):
         {date_table_name}[{date_column_name}] >= _over_start_date &&
         {date_table_name}[{date_column_name}] <= _over_end_date
     )
-    VAR _result = {expression}
+    VAR _result = {result}
     RETURN
-        _result"""
+        {expression}"""
 
             # Construct the measure name
             metric_initial = metric_type.upper()[:1]
-            name = f"{prefix}{table_name_capt}{period}{offset}{metric_initial}"
+            if metric_graphic:
+                graphic_flag="G"
+            if metric_format:
+                format_flag="F"     
+            name = f"{prefix}{table_name_capt}{period}{offset}{metric_initial}{graphic_flag}{format_flag}"
 
             # Write the generated measure to the file
             file.write(f"{name} = {template}\n\n")
@@ -98,7 +121,7 @@ configs = [
     "offset": 1,
     "table_name": "reel",
     "column_name": "reel",
-    "metrics": [{"type": "value", "graphic": "arrows"},{"type": "percentage", "graphic": "arrows"},{"type": "status"}]
+    "metrics": [{"type": "value", "format": "### ### ### $", "graphic": "arrows"},{"type": "percentage","format": "0 %", "graphic": "arrows"},{"type": "status"}]
     },
     {
     "type": "POP",
@@ -106,10 +129,13 @@ configs = [
     "offset": 1,
     "table_name": "reel",
     "column_name": "reel",
-    "metrics": [{"type": "value", "graphic": "arrows"},{"type": "percentage", "graphic": "arrows"},{"type": "status"}]
+    "metrics": [{"type": "value", "format": "### ### ### $", "graphic": "arrows"},{"type": "percentage","format": "0 %", "graphic": "arrows"},{"type": "status"}]
     },
 ]
 
+output_file="dax_measures.txt"
+with open(output_file, 'w') as file:
+    file.write(f"")
 for config in configs:
     if config.get("type") == "POP":
-        generate_pop(config, output_file="dax_measures.txt")
+        generate_pop(config, output_file)
