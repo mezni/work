@@ -264,6 +264,116 @@ def generate_lbl(config, output_file):
         file.write(f"{name} = {mesure}\n\n")
 
 configs = [
+    {
+        "type": "UTL",
+        "name": "UtlDateCourante",        
+        "template": "FORMAT(TODAY(),{format})",
+        "params":['"dd mmm yyyy", "fr-FR"']       
+    },
+    {
+        "type": "UTL",
+        "name": "UtlMoisCourant",        
+        "template": "FORMAT(TODAY(),{format})",
+        "params":['"mmm yyyy", "fr-FR"']       
+    },
+    {
+        "type": "UTL",
+        "name": "UtlPremierJourAF",        
+        "template": "FORMAT(IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()), 4, 1), DATE(YEAR(TODAY()) - 1, 4, 1)),{format})",
+        "params":['"dd mmm yyyy", "fr-FR"']       
+    },
+    {
+        "type": "UTL",
+        "name": "UtlDernierJourAF",        
+        "template": "FORMAT(IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()) +1, 3, 31), DATE(YEAR(TODAY()) , 3, 31)),{format})",
+        "params":['"dd mmm yyyy", "fr-FR"']       
+    }, 
+    {
+        "type": "LBL",
+        "name": "LblSuiviCumulatif",        
+        "template": "Suivi cumulatif du {first} au {last}",
+        "params":["[UtlPremierJourAF]","[UtlDernierJourAF]"]       
+    },
+    {
+        "type": "LBL",
+        "name": "LblSuiviCumulCompar",        
+        "template": "Cumulatif et comparatif au {last}",
+        "params":["[UtlDernierJourAF]"]       
+    },
+    {
+        "type": "LBL",
+        "name": "LblSuiviMoisEncours",        
+        "template": "Suivi pour le mois en cours ({mois})",
+        "params":["[UtlMoisCourant]"]       
+    },
+    {
+        "type": "LBL",
+        "name": "LblEnDate",        
+        "template": "En date du {date}",
+        "params":["[UtlDateCourante]"]       
+    },   
+    {
+        "type": "UTL",
+        "name": "TotalReel",        
+        "template": "SUM({table_name}[{column_name}])",
+        "params":["reel", "reel"]       
+    },
+    {
+        "type": "UTL",
+        "name": "TotalBudget",        
+        "template": "SUM({table_name}[{column_name}])",
+        "params":["budget_prevision", "budget"]       
+    },
+    {
+        "type": "UTL",
+        "name": "TotalPrevision",        
+        "template": "SUM({table_name}[{column_name}])",
+        "params":["budget_prevision", "prevision"]       
+    },
+    {
+        "type": "UTL",
+        "name": "TotalReelF",        
+        "template": "FORMAT(SUM({table_name}[{column_name}]),{format})",
+        "params":["reel", "reel", '"### ### ### $"']       
+    },
+    {
+        "type": "POP",
+        "period": "Year",
+        "offset": 1,
+        "table_name": "reel",
+        "column_name": "reel",
+        "metrics": [
+            {"type": "value", "format": "### ### ### $", "graphic": "arrows"},
+            {"type": "percentage", "format": "0 %", "graphic": "arrows"},
+            {"type": "status"}
+        ]
+    },
+    {
+        "type": "GAP",
+        "period": "Year",
+        "src_table_name": "reel",
+        "src_column_name": "reel",
+        "dst_table_name": "budget_prevision",
+        "dst_column_name": "budget",
+        "metrics": [
+            {"type": "value", "format": "### ### ### $", "graphic": "arrows"},
+            {"type": "percentage", "format": "0 %", "graphic": "arrows"},
+            {"type": "status"}
+        ]
+    },
+    {
+        "type": "GAP",
+        "period": "Year",
+        "src_table_name": "reel",
+        "src_column_name": "reel",
+        "dst_table_name": "budget_prevision",
+        "dst_column_name": "prevision",
+        "metrics": [
+            {"type": "value", "format": "### ### ### $", "graphic": "arrows"},
+            {"type": "percentage", "format": "0 %", "graphic": "arrows"},
+            {"type": "status"}
+        ]
+    },
 ]
 
 # Output file
