@@ -91,6 +91,30 @@ YoYReelReelYear1S =
 
 YoYReelReelYear1SCpt = 1 - [YoYReelReelYear1S]
 
+YoYReelReelYear1GG =  
+    VAR _down_char = UNICHAR(128308)
+    VAR _steady_char = UNICHAR(128993)
+    VAR _up_char = UNICHAR(128994)
+    VAR _start_date = IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()), 4, 1), DATE(YEAR(TODAY()) - 1, 4, 1))
+    VAR _end_date = IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()) + 1, 3, 31), DATE(YEAR(TODAY()), 3, 31))
+    VAR _over_start_date = DATE(YEAR(_start_date) - 1, MONTH(_start_date), DAY(_start_date))
+    VAR _over_end_date = DATE(YEAR(_end_date) - 1, MONTH(_end_date), DAY(_end_date))
+    VAR _result1 = CALCULATE(
+        SUM(reel[reel]),
+        dimCalendrier[Date] >= _start_date &&
+        dimCalendrier[Date] <= _end_date
+    )
+    VAR _result2 = CALCULATE(
+        SUM(reel[reel]),
+        dimCalendrier[Date] >= _over_start_date &&
+        dimCalendrier[Date] <= _over_end_date
+    )
+    VAR _result = IF(_result1 - _result2 < 0, -1, IF(_result1 - _result2 > 0, 1, 0))
+    RETURN
+        IF(_result < 0, _down_char, IF(_result > 0, _up_char, _steady_char))
+
+YoYReelReelYear1GGCpt = 1 - [YoYReelReelYear1GG]
+
 GoPYReelBudgBudgYearVG =  
     VAR _down_char = UNICHAR(9660)
     VAR _steady_char = UNICHAR(9679)
@@ -217,9 +241,22 @@ GoPYReelBudgPrevYearS =
 
 GoPYReelBudgPrevYearSCpt = 1 - [GoPYReelBudgPrevYearS]
 
+FltY1 = 
+    VAR _start_date = IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()) - 1 , 4, 1), DATE(YEAR(TODAY()) - 1 - 1, 4, 1))
+    VAR _end_date = IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY())  + 1, 3, 31), DATE(YEAR(TODAY()) , 3, 31))
+    RETURN
+    IF(
+        AND(
+            MAX(dimCalendrier[Date]) >= _start_date,
+            MAX(dimCalendrier[Date]) < _end_date
+        ),
+        1,
+        0
+    )
+
 FltY3 = 
     VAR _start_date = IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()) - 3 , 4, 1), DATE(YEAR(TODAY()) - 3 - 1, 4, 1))
-    VAR _end_date = IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()) + 1, 3, 31), DATE(YEAR(TODAY()), 3, 31))
+    VAR _end_date = IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY())  + 1, 3, 31), DATE(YEAR(TODAY()) , 3, 31))
     RETURN
     IF(
         AND(
@@ -284,4 +321,79 @@ GoPMReelBudgPrevMonthPCpt = 1 - [GoPMReelBudgPrevMonthP]
 ProgressionJournees = DIVIDE(DAY(TODAY()), DAY(EOMONTH(TODAY(), 0)), 0)
 
 ProgressionJourneesCpt = 1 - [ProgressionJournees]
+
+TotalReelAEC = FORMAT(CALCULATE(
+    SUM(reel[reel]),
+    DATESBETWEEN(
+        dimCalendrier[Date],
+        DATE(YEAR(TODAY()) - IF(MONTH(TODAY()) < 4, 1, 0), 4, 1), 
+        DATE(YEAR(TODAY()) + IF(MONTH(TODAY()) >= 4, 1, 0), 3, 31) 
+    )),"### ### ### $")
+        
+
+YoYReelReelYear2GG =  
+    VAR _down_char = UNICHAR(128308)
+    VAR _steady_char = UNICHAR(128993)
+    VAR _up_char = UNICHAR(128994)
+    VAR _start_date = IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()), 4, 1), DATE(YEAR(TODAY()) - 1, 4, 1))
+    VAR _end_date = IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()) + 1, 3, 31), DATE(YEAR(TODAY()), 3, 31))
+    VAR _over_start_date = DATE(YEAR(_start_date) - 2, MONTH(_start_date), DAY(_start_date))
+    VAR _over_end_date = DATE(YEAR(_end_date) - 2, MONTH(_end_date), DAY(_end_date))
+    VAR _result1 = CALCULATE(
+        SUM(reel[reel]),
+        dimCalendrier[Date] >= _start_date &&
+        dimCalendrier[Date] <= _end_date
+    )
+    VAR _result2 = CALCULATE(
+        SUM(reel[reel]),
+        dimCalendrier[Date] >= _over_start_date &&
+        dimCalendrier[Date] <= _over_end_date
+    )
+    VAR _result = IF(_result1 - _result2 < 0, -1, IF(_result1 - _result2 > 0, 1, 0))
+    RETURN
+        IF(_result < 0, _down_char, IF(_result > 0, _up_char, _steady_char))
+
+YoYReelReelYear2GGCpt = 1 - [YoYReelReelYear2GG]
+
+YoYReelReelYear3GG =  
+    VAR _down_char = UNICHAR(128308)
+    VAR _steady_char = UNICHAR(128993)
+    VAR _up_char = UNICHAR(128994)
+    VAR _start_date = IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()), 4, 1), DATE(YEAR(TODAY()) - 1, 4, 1))
+    VAR _end_date = IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()) + 1, 3, 31), DATE(YEAR(TODAY()), 3, 31))
+    VAR _over_start_date = DATE(YEAR(_start_date) - 3, MONTH(_start_date), DAY(_start_date))
+    VAR _over_end_date = DATE(YEAR(_end_date) - 3, MONTH(_end_date), DAY(_end_date))
+    VAR _result1 = CALCULATE(
+        SUM(reel[reel]),
+        dimCalendrier[Date] >= _start_date &&
+        dimCalendrier[Date] <= _end_date
+    )
+    VAR _result2 = CALCULATE(
+        SUM(reel[reel]),
+        dimCalendrier[Date] >= _over_start_date &&
+        dimCalendrier[Date] <= _over_end_date
+    )
+    VAR _result = IF(_result1 - _result2 < 0, -1, IF(_result1 - _result2 > 0, 1, 0))
+    RETURN
+        IF(_result < 0, _down_char, IF(_result > 0, _up_char, _steady_char))
+
+YoYReelReelYear3GGCpt = 1 - [YoYReelReelYear3GG]
+
+TotalBudgetAEC = FORMAT(CALCULATE(
+    SUM(budget_prevision[budget]),
+    DATESBETWEEN(
+        dimCalendrier[Date],
+        DATE(YEAR(TODAY()) - IF(MONTH(TODAY()) < 4, 1, 0), 4, 1), 
+        DATE(YEAR(TODAY()) + IF(MONTH(TODAY()) >= 4, 1, 0), 3, 31) 
+    )),"### ### ### $")
+        
+
+TotalPrevisionAEC = FORMAT(CALCULATE(
+    SUM(budget_prevision[prevision]),
+    DATESBETWEEN(
+        dimCalendrier[Date],
+        DATE(YEAR(TODAY()) - IF(MONTH(TODAY()) < 4, 1, 0), 4, 1), 
+        DATE(YEAR(TODAY()) + IF(MONTH(TODAY()) >= 4, 1, 0), 3, 31) 
+    )),"### ### ### $")
+        
 

@@ -24,6 +24,40 @@ def get_mesure_expression(metric_type,metric_format, metric_graphic):
             return f"""FORMAT(_result, "{metric_format}")"""
     return "_result"
 
+def generate_agg(config, output_file):
+    default_date_table_name = "dimCalendrier"
+    default_date_column_name = "Date"
+
+    period = config.get("period", "Year")
+    offset = config.get("offset", 0)
+    table_name = config.get("table_name")
+    column_name = config.get("column_name")
+    date_table_name = config.get("date_table_name", default_date_table_name)
+    date_column_name = config.get("date_column_name", default_date_column_name) 
+    table_name_capt = table_name.capitalize()[:4]  
+    column_name_capt = column_name.capitalize()[:4] 
+
+    if period == "Year":
+        start_date = f"IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()) - {offset}, 4, 1), DATE(YEAR(TODAY()) - {offset} - 1, 4, 1))"
+        end_date = f"IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()) - {offset} + 1, 3, 31), DATE(YEAR(TODAY()) - {offset}, 3, 31))"
+
+        prefix = "Sum"
+
+    template = f"""
+    VAR _start_date = {start_date}
+    VAR _end_date = {end_date}
+    VAR _result = CALCULATE(
+        SUM({table_name}[{column_name}]),
+        {date_table_name}[{date_column_name}] >= _start_date &&
+        {date_table_name}[{date_column_name}] <= _end_date
+    )
+    RETURN
+        _result"""
+
+    name = f"{prefix}{table_name_capt}{column_name_capt}{period}{offset}"
+    with open(output_file, 'a') as file:
+        file.write(f"{name} = {template}\n\n")
+
 def generate_pop(config, output_file):
     default_date_table_name = "dimCalendrier"
     default_date_column_name = "Date"
@@ -109,6 +143,8 @@ def generate_pop(config, output_file):
             file.write(f"{name} = {template}\n\n")
             if format_flag=="":
                 file.write(f"""{name}Cpt = 1 - [{name}]\n\n""")
+
+
 
 
 def generate_gap(config, output_file):
@@ -203,7 +239,7 @@ def generate_flt(config, output_file):
 
     if period == "Year":
         start_date = f"IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()) - {offset} , 4, 1), DATE(YEAR(TODAY()) - {offset} - 1, 4, 1))"
-        end_date = f"IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()) + 1, 3, 31), DATE(YEAR(TODAY()), 3, 31))"
+        end_date = f"IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY())  + 1, 3, 31), DATE(YEAR(TODAY()) , 3, 31))"
         prefix = "FltY"
         offset_flag=offset
     elif period == "Month":
@@ -353,7 +389,8 @@ configs = [
         "metrics": [
             {"type": "value", "format": "### ### ### $", "graphic": "arrows"},
             {"type": "percentage", "format": "0 %", "graphic": "arrows"},
-            {"type": "status"}
+            {"type": "status"},
+            {"type":  "graphic",  "graphic": "traffic_lights"}
         ]
     },
     {
@@ -381,6 +418,11 @@ configs = [
             {"type": "percentage", "format": "0 %", "graphic": "arrows"},
             {"type": "status"}
         ]
+    },
+    {
+        "type": "FLT",
+        "period": "Year",
+        "offset": 1
     },
     {
         "type": "FLT",
@@ -426,18 +468,70 @@ configs = [
     },
     {
         "type": "UTL",
-        "name": "ProgressionJourneesCpt",        
+        "name": "TotalReelAEC",        
         "template": """FORMAT(CALCULATE(
-    SUM({table_name}[{column_name}),
+    SUM({table_name}[{column_name}]),
     DATESBETWEEN(
         {date_table_name}[{date_column_name}],
         DATE(YEAR(TODAY()) - IF(MONTH(TODAY()) < 4, 1, 0), 4, 1), 
         DATE(YEAR(TODAY()) + IF(MONTH(TODAY()) >= 4, 1, 0), 3, 31) 
-    )
-),{format})
-        """  
+    )),{format})
+        """,  
         "params": ["reel","reel","dimCalendrier","Date",'"### ### ### $"']    
     },
+    {
+        "type": "POP",
+        "period": "Year",
+        "offset": 2,
+        "table_name": "reel",
+        "column_name": "reel",
+        "metrics": [
+            {"type":  "graphic",  "graphic": "traffic_lights"}
+        ]
+    },
+    {
+        "type": "POP",
+        "period": "Year",
+        "offset": 3,
+        "table_name": "reel",
+        "column_name": "reel",
+        "metrics": [
+            {"type":  "graphic",  "graphic": "traffic_lights"}
+        ]
+    },
+    {
+        "type": "UTL",
+        "name": "TotalBudgetAEC",        
+        "template": """FORMAT(CALCULATE(
+    SUM({table_name}[{column_name}]),
+    DATESBETWEEN(
+        {date_table_name}[{date_column_name}],
+        DATE(YEAR(TODAY()) - IF(MONTH(TODAY()) < 4, 1, 0), 4, 1), 
+        DATE(YEAR(TODAY()) + IF(MONTH(TODAY()) >= 4, 1, 0), 3, 31) 
+    )),{format})
+        """,  
+        "params": ["budget_prevision","budget","dimCalendrier","Date",'"### ### ### $"']    
+    },
+    {
+        "type": "UTL",
+        "name": "TotalPrevisionAEC",        
+        "template": """FORMAT(CALCULATE(
+    SUM({table_name}[{column_name}]),
+    DATESBETWEEN(
+        {date_table_name}[{date_column_name}],
+        DATE(YEAR(TODAY()) - IF(MONTH(TODAY()) < 4, 1, 0), 4, 1), 
+        DATE(YEAR(TODAY()) + IF(MONTH(TODAY()) >= 4, 1, 0), 3, 31) 
+    )),{format})
+        """,  
+        "params": ["budget_prevision","prevision","dimCalendrier","Date",'"### ### ### $"']    
+    },
+#    {
+#        "type": "SUM",
+#        "period": "Year",
+#        "offset": 0,
+#        "table_name": "reel",
+#        "column_name": "reel",
+#    },
 ]
 
 
@@ -459,3 +553,5 @@ for config in configs:
         generate_pop(config, output_file)
     elif config.get("type") == "GAP":
         generate_gap(config, output_file)
+#    elif config.get("type") in ["SUM"]:
+#        generate_agg(config, output_file)
