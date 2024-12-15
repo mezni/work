@@ -202,7 +202,7 @@ def generate_flt(config, output_file):
         start_date = "DATE(YEAR(TODAY()), MONTH(TODAY()), 1)"
         end_date = "EOMONTH(TODAY(), 0)"
         prefix = "FltM"
-        offset_flag=""
+        offset_flag=offset
     else:
         print("Unsupported period.")
         return
@@ -214,8 +214,8 @@ def generate_flt(config, output_file):
     RETURN
     IF(
         AND(
-            {date_table_name}[{date_column_name}] >= _start_date,
-            {date_table_name}[{date_column_name}] < _end_date
+            MAX({date_table_name}[{date_column_name}]) >= _start_date,
+            MAX({date_table_name}[{date_column_name}]) < _end_date
         ),
         1,
         0
@@ -373,6 +373,16 @@ configs = [
             {"type": "percentage", "format": "0 %", "graphic": "arrows"},
             {"type": "status"}
         ]
+    },
+    {
+        "type": "FLT",
+        "period": "Year",
+        "offset": 3
+    },
+    {
+        "type": "FLT",
+        "period": "Month",
+        "offset": 1
     },
 ]
 

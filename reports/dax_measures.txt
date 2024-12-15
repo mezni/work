@@ -199,3 +199,29 @@ GoPYReelBudgPrevYearSGF =
     RETURN
         _result
 
+FltY3 = 
+    VAR _start_date = IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()) - 3 , 4, 1), DATE(YEAR(TODAY()) - 3 - 1, 4, 1))
+    VAR _end_date = IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()) + 1, 3, 31), DATE(YEAR(TODAY()), 3, 31))
+    RETURN
+    IF(
+        AND(
+            MAX(dimCalendrier[Date]) >= _start_date,
+            MAX(dimCalendrier[Date]) < _end_date
+        ),
+        1,
+        0
+    )
+
+FltM1 = 
+    VAR _start_date = DATE(YEAR(TODAY()), MONTH(TODAY()), 1)
+    VAR _end_date = EOMONTH(TODAY(), 0)
+    RETURN
+    IF(
+        AND(
+            MAX(dimCalendrier[Date]) >= _start_date,
+            MAX(dimCalendrier[Date]) < _end_date
+        ),
+        1,
+        0
+    )
+
