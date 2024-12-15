@@ -96,14 +96,19 @@ def generate_pop(config, output_file):
 
             # Construct the measure name
             metric_initial = metric_type.upper()[:1]
+            format_flag=""
+            graphic_flag=""
             if metric_graphic:
                 graphic_flag="G"
-            if metric_format:
-                format_flag="F"     
+            elif metric_format:
+                format_flag="F" 
+                       
             name = f"{prefix}{table_name_capt}{column_name_capt}{period}{offset}{metric_initial}{graphic_flag}{format_flag}"
 
             # Write the generated measure to the file
             file.write(f"{name} = {template}\n\n")
+            if format_flag=="":
+                file.write(f"""{name}Cpt = 1 - [{name}]\n\n""")
 
 
 def generate_gap(config, output_file):
@@ -174,15 +179,18 @@ def generate_gap(config, output_file):
 
             # Construct the measure name
             metric_initial = metric_type.upper()[:1]
+            format_flag=""
+            graphic_flag=""
             if metric_graphic:
                 graphic_flag="G"
-            if metric_format:
-                format_flag="F"     
+            elif metric_format:
+                format_flag="F"    
             name = f"{prefix}{src_table_name_capt}{dst_table_name_capt}{dst_column_name_capt}{period}{metric_initial}{graphic_flag}{format_flag}"
 
             # Write the generated measure to the file
             file.write(f"{name} = {template}\n\n")
-
+            if format_flag=="":
+                file.write(f"""{name}Cpt = 1 - [{name}]\n\n""")
 
 def generate_flt(config, output_file):
     default_date_table_name = "dimCalendrier"
@@ -384,7 +392,40 @@ configs = [
         "period": "Month",
         "offset": 1
     },
+    {
+        "type": "GAP",
+        "period": "Month",
+        "src_table_name": "reel",
+        "src_column_name": "reel",
+        "dst_table_name": "budget_prevision",
+        "dst_column_name": "budget",
+        "metrics": [
+            {"type": "percentage"}
+        ]
+    },
+    {
+        "type": "GAP",
+        "period": "Month",
+        "src_table_name": "reel",
+        "src_column_name": "reel",
+        "dst_table_name": "budget_prevision",
+        "dst_column_name": "prevision",
+        "metrics": [
+            {"type": "percentage"}
+        ]
+    },
+    {
+        "type": "UTL",
+        "name": "ProgressionJournees",        
+        "template": "DIVIDE(DAY(TODAY()), DAY(EOMONTH(TODAY(), 0)), 0)"     
+    },
+    {
+        "type": "UTL",
+        "name": "ProgressionJourneesCpt",        
+        "template": "1 - [ProgressionJournees]"     
+    },
 ]
+
 
 # Output file
 output_file = "dax_measures.txt"

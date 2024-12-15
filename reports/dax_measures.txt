@@ -22,7 +22,7 @@ TotalPrevision = SUM(budget_prevision[prevision])
 
 TotalReelF = FORMAT(SUM(reel[reel]),"### ### ### $")
 
-YoYReelReelYear1VGF =  
+YoYReelReelYear1VG =  
     VAR _down_char = UNICHAR(9660)
     VAR _steady_char = UNICHAR(9679)
     VAR _up_char = UNICHAR(9650)
@@ -44,7 +44,9 @@ YoYReelReelYear1VGF =
     RETURN
         IF(_result < 0, _down_char, IF(_result > 0, _up_char, _steady_char)) & " " & FORMAT(ABS(_result), "### ### ### $")
 
-YoYReelReelYear1PGF =  
+YoYReelReelYear1VGCpt = 1 - [YoYReelReelYear1VG]
+
+YoYReelReelYear1PG =  
     VAR _down_char = UNICHAR(9660)
     VAR _steady_char = UNICHAR(9679)
     VAR _up_char = UNICHAR(9650)
@@ -66,7 +68,9 @@ YoYReelReelYear1PGF =
     RETURN
         IF(_result < 0, _down_char, IF(_result > 0, _up_char, _steady_char)) & " " & FORMAT(ABS(_result), "0 %")
 
-YoYReelReelYear1SGF =  
+YoYReelReelYear1PGCpt = 1 - [YoYReelReelYear1PG]
+
+YoYReelReelYear1S =  
     VAR _start_date = IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()), 4, 1), DATE(YEAR(TODAY()) - 1, 4, 1))
     VAR _end_date = IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()) + 1, 3, 31), DATE(YEAR(TODAY()), 3, 31))
     VAR _over_start_date = DATE(YEAR(_start_date) - 1, MONTH(_start_date), DAY(_start_date))
@@ -85,7 +89,9 @@ YoYReelReelYear1SGF =
     RETURN
         _result
 
-GoPYReelBudgBudgYearVGF =  
+YoYReelReelYear1SCpt = 1 - [YoYReelReelYear1S]
+
+GoPYReelBudgBudgYearVG =  
     VAR _down_char = UNICHAR(9660)
     VAR _steady_char = UNICHAR(9679)
     VAR _up_char = UNICHAR(9650)
@@ -105,7 +111,9 @@ GoPYReelBudgBudgYearVGF =
     RETURN
         IF(_result < 0, _down_char, IF(_result > 0, _up_char, _steady_char)) & " " & FORMAT(ABS(_result), "### ### ### $")
 
-GoPYReelBudgBudgYearPGF =  
+GoPYReelBudgBudgYearVGCpt = 1 - [GoPYReelBudgBudgYearVG]
+
+GoPYReelBudgBudgYearPG =  
     VAR _down_char = UNICHAR(9660)
     VAR _steady_char = UNICHAR(9679)
     VAR _up_char = UNICHAR(9650)
@@ -125,7 +133,9 @@ GoPYReelBudgBudgYearPGF =
     RETURN
         IF(_result < 0, _down_char, IF(_result > 0, _up_char, _steady_char)) & " " & FORMAT(ABS(_result), "0 %")
 
-GoPYReelBudgBudgYearSGF =  
+GoPYReelBudgBudgYearPGCpt = 1 - [GoPYReelBudgBudgYearPG]
+
+GoPYReelBudgBudgYearS =  
     VAR _start_date = IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()), 4, 1), DATE(YEAR(TODAY()) - 1, 4, 1))
     VAR _end_date = IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()) + 1, 3, 31), DATE(YEAR(TODAY()), 3, 31))
     VAR _result1 = CALCULATE(
@@ -142,7 +152,9 @@ GoPYReelBudgBudgYearSGF =
     RETURN
         _result
 
-GoPYReelBudgPrevYearVGF =  
+GoPYReelBudgBudgYearSCpt = 1 - [GoPYReelBudgBudgYearS]
+
+GoPYReelBudgPrevYearVG =  
     VAR _down_char = UNICHAR(9660)
     VAR _steady_char = UNICHAR(9679)
     VAR _up_char = UNICHAR(9650)
@@ -162,7 +174,9 @@ GoPYReelBudgPrevYearVGF =
     RETURN
         IF(_result < 0, _down_char, IF(_result > 0, _up_char, _steady_char)) & " " & FORMAT(ABS(_result), "### ### ### $")
 
-GoPYReelBudgPrevYearPGF =  
+GoPYReelBudgPrevYearVGCpt = 1 - [GoPYReelBudgPrevYearVG]
+
+GoPYReelBudgPrevYearPG =  
     VAR _down_char = UNICHAR(9660)
     VAR _steady_char = UNICHAR(9679)
     VAR _up_char = UNICHAR(9650)
@@ -182,7 +196,9 @@ GoPYReelBudgPrevYearPGF =
     RETURN
         IF(_result < 0, _down_char, IF(_result > 0, _up_char, _steady_char)) & " " & FORMAT(ABS(_result), "0 %")
 
-GoPYReelBudgPrevYearSGF =  
+GoPYReelBudgPrevYearPGCpt = 1 - [GoPYReelBudgPrevYearPG]
+
+GoPYReelBudgPrevYearS =  
     VAR _start_date = IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()), 4, 1), DATE(YEAR(TODAY()) - 1, 4, 1))
     VAR _end_date = IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()) + 1, 3, 31), DATE(YEAR(TODAY()), 3, 31))
     VAR _result1 = CALCULATE(
@@ -198,6 +214,8 @@ GoPYReelBudgPrevYearSGF =
     VAR _result = IF(_result1 - _result2 < 0, -1, IF(_result1 - _result2 > 0, 1, 0))
     RETURN
         _result
+
+GoPYReelBudgPrevYearSCpt = 1 - [GoPYReelBudgPrevYearS]
 
 FltY3 = 
     VAR _start_date = IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()) - 3 , 4, 1), DATE(YEAR(TODAY()) - 3 - 1, 4, 1))
@@ -224,4 +242,46 @@ FltM1 =
         1,
         0
     )
+
+GoPMReelBudgBudgMonthP =  
+    VAR _start_date = DATE(YEAR(TODAY()), MONTH(TODAY()), 1)
+    VAR _end_date = EOMONTH(TODAY(), 0)
+    VAR _result1 = CALCULATE(
+        SUM(reel[reel]),
+        dimCalendrier[Date] >= _start_date &&
+        dimCalendrier[Date] <= _end_date
+    )
+    VAR _result2 = CALCULATE(
+        SUM(budget_prevision[budget]),
+        dimCalendrier[Date] >= _start_date &&
+        dimCalendrier[Date] <= _end_date
+    )
+    VAR _result = DIVIDE(_result1 - _result2, _result1, 0)
+    RETURN
+        _result
+
+GoPMReelBudgBudgMonthPCpt = 1 - [GoPMReelBudgBudgMonthP]
+
+GoPMReelBudgPrevMonthP =  
+    VAR _start_date = DATE(YEAR(TODAY()), MONTH(TODAY()), 1)
+    VAR _end_date = EOMONTH(TODAY(), 0)
+    VAR _result1 = CALCULATE(
+        SUM(reel[reel]),
+        dimCalendrier[Date] >= _start_date &&
+        dimCalendrier[Date] <= _end_date
+    )
+    VAR _result2 = CALCULATE(
+        SUM(budget_prevision[prevision]),
+        dimCalendrier[Date] >= _start_date &&
+        dimCalendrier[Date] <= _end_date
+    )
+    VAR _result = DIVIDE(_result1 - _result2, _result1, 0)
+    RETURN
+        _result
+
+GoPMReelBudgPrevMonthPCpt = 1 - [GoPMReelBudgPrevMonthP]
+
+ProgressionJournees = DIVIDE(DAY(TODAY()), DAY(EOMONTH(TODAY(), 0)), 0)
+
+ProgressionJourneesCpt = 1 - [ProgressionJournees]
 
