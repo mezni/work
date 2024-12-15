@@ -424,7 +424,22 @@ configs = [
         "name": "ProgressionJourneesCpt",        
         "template": "1 - [ProgressionJournees]"     
     },
+    {
+        "type": "UTL",
+        "name": "ProgressionJourneesCpt",        
+        "template": """FORMAT(CALCULATE(
+    SUM({table_name}[{column_name}),
+    DATESBETWEEN(
+        {date_table_name}[{date_column_name}],
+        DATE(YEAR(TODAY()) - IF(MONTH(TODAY()) < 4, 1, 0), 4, 1), 
+        DATE(YEAR(TODAY()) + IF(MONTH(TODAY()) >= 4, 1, 0), 3, 31) 
+    )
+),{format})
+        """  
+        "params": ["reel","reel","dimCalendrier","Date",'"### ### ### $"']    
+    },
 ]
+
 
 
 # Output file
