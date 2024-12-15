@@ -42,15 +42,16 @@ def generate_agg(config, output_file):
         end_date = f"IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()) - {offset} + 1, 3, 31), DATE(YEAR(TODAY()) - {offset}, 3, 31))"
 
         prefix = "Sum"
-
+    format=f"""VAR _result = FORMAT(_result1, "### ### ### $")"""
     template = f"""
     VAR _start_date = {start_date}
     VAR _end_date = {end_date}
-    VAR _result = CALCULATE(
+    VAR _result1 = CALCULATE(
         SUM({table_name}[{column_name}]),
         {date_table_name}[{date_column_name}] >= _start_date &&
         {date_table_name}[{date_column_name}] <= _end_date
     )
+    {format} 
     RETURN
         _result"""
 
@@ -355,6 +356,12 @@ configs = [
         "name": "LblEnDate",        
         "template": "En date du {date}",
         "params":["[UtlDateCourante]"]       
+    }, 
+    {
+        "type": "LBL",
+        "name": "LblSuiviDepenses",        
+        "template": "Suivi des dépenses mensuelles - Dernière transaction  =  {date}",
+        "params":["[UtlDateCourante]"]       
     },   
     {
         "type": "UTL",
@@ -373,6 +380,12 @@ configs = [
         "name": "TotalPrevision",        
         "template": "SUM({table_name}[{column_name}])",
         "params":["budget_prevision", "prevision"]       
+    },
+    {
+        "type": "UTL",
+        "name": "TotalDepenses",        
+        "template": "SUM({table_name}[{column_name}])",
+        "params":["depenses", "montant"]       
     },
     {
         "type": "UTL",
@@ -525,13 +538,34 @@ configs = [
         """,  
         "params": ["budget_prevision","prevision","dimCalendrier","Date",'"### ### ### $"']    
     },
-#    {
-#        "type": "SUM",
-#        "period": "Year",
-#        "offset": 0,
-#        "table_name": "reel",
-#        "column_name": "reel",
-#    },
+    {
+        "type": "SUM",
+        "period": "Year",
+        "offset": 0,
+        "table_name": "reel",
+        "column_name": "reel",
+    },
+    {
+        "type": "SUM",
+        "period": "Year",
+        "offset": 1,
+        "table_name": "reel",
+        "column_name": "reel",
+    },
+    {
+        "type": "SUM",
+        "period": "Year",
+        "offset": 2,
+        "table_name": "reel",
+        "column_name": "reel",
+    },
+    {
+        "type": "SUM",
+        "period": "Year",
+        "offset": 3,
+        "table_name": "reel",
+        "column_name": "reel",
+    },
 ]
 
 
@@ -553,5 +587,5 @@ for config in configs:
         generate_pop(config, output_file)
     elif config.get("type") == "GAP":
         generate_gap(config, output_file)
-#    elif config.get("type") in ["SUM"]:
-#        generate_agg(config, output_file)
+    elif config.get("type") in ["SUM"]:
+        generate_agg(config, output_file)
