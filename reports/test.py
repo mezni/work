@@ -63,9 +63,12 @@ date_column_name="Date"
 #    mesure_format="### ### ### $"
 #)
 
+
+# Ajout mesure_type value, percentage 
 mesure = Mesure(
-    name="TotalReelY-1_0",
+    name="TotalReelY-1_0V",
     mesure_type="SUM",
+#    metric_type="Percent",
     table_name="reel",
     column_name="reel",
     period="Year",
