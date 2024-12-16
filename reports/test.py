@@ -8,6 +8,9 @@ class Mesure:
         self.table_name = kwargs.get('table_name', None)
         self.column_name = kwargs.get('column_name', None)
         self.mesure_format = kwargs.get('mesure_format', None)
+        self.period = kwargs.get('period', None)
+        self.period_start = kwargs.get('period_start', None)
+        self.mesure_end = kwargs.get('mesure_end', None)
         self.mesure = ""
         self.generate()
 
@@ -17,6 +20,9 @@ class Mesure:
 
         if self.mesure_format:
             expression = f"FORMAT({expression}, \"{self.mesure_format}\")"
+
+        if self.period:
+            print (self.period)
 
         self.mesure = expression
 
