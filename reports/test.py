@@ -1,37 +1,61 @@
-def print_mesure(name, mesure):
-    print(f"{name} = {mesure}\n")
+class Mesure:
+    def __init__(self, **kwargs):
+        """
+        Initialize a Mesure object with optional parameters.
+        """
+        self.name = kwargs.get('name', None)
+        self.mesure_type = kwargs.get('mesure_type', None)
+        self.table_name = kwargs.get('table_name', None)
+        self.column_name = kwargs.get('column_name', None)
+        self.mesure_format = kwargs.get('mesure_format', None)
+        self.mesure = ""
+        self.generate()
 
-chars = { "down_char": "UNICHAR(9660)",
-    "steady_char" : "UNICHAR(9679)",
-    "up_char" : "UNICHAR(9650)"}
+    def generate(self):
+        if self.mesure_type == "SUM":
+            expression = f"{self.mesure_type}({self.table_name}[{self.column_name}])"
+
+        if self.mesure_format:
+            expression = f"FORMAT({expression}, \"{self.mesure_format}\")"
+
+        self.mesure = expression
+
+    def display(self):
+        """
+        Print the generated measure.
+        """
+        print(f"{self.name} = {self.mesure}\n")
+
+    def write(self, output_file="output.txt"):
+        """
+        Write the measure to the specified output file.
+        """
+        try:
+            with open(output_file, 'a') as file:
+                file.write(f"{self.name} = {self.mesure}\n\n")
+        except Exception as e:
+            print(f"Error writing to file '{output_file}': {e}")
 
 
+# Example usage
+mesure = Mesure(
+    name="TotalReelF",
+    mesure_type="SUM",
+    table_name="reel",
+    column_name="reel",
+    mesure_format="### ### ### $"
+)
 
-def generate_mesure(config):
-    name = "test"
-    table_name = config.get("table_name")
-    column_name = config.get("column_name")
-    
-    # Example strings list for variables_section
-    strings_list = ["VAR xxx", "VAR ccc", "VAR vvv"]
-    
-    variables_section = "\n"
-    variables_section += "\n".join(f"  {line}" for line in strings_list)
-
-    for key, value in chars.items():
-        print(f"\t{key}: {value}")
-        variables_section += f"\n  VAR {key} = {value}"
-
-    # Create the mesure string
-    mesure = f"""{variables_section}"""
-    return name, mesure 
-
-# Configuration dictionary
-config = {
-    "table_name": "test",
-    "column_name": "ccc",
-}
-
-# Generate and print the measure
-name, mesure = generate_mesure(config)
-print_mesure(name, mesure)
+mesure = Mesure(
+    name="TotalReelF",
+    mesure_type="SUM",
+    table_name="reel",
+    column_name="reel",
+    period="Year",
+    period_start=-1,
+    period_end=0,
+    mesure_format="### ### ### $"
+)
+mesure.display()
+#output_file = "output.txt"
+#mesure.write(output_file)

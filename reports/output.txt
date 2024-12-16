@@ -1,0 +1,14 @@
+Test Mesure = VAR xxx
+VAR ccc
+VAR vvv
+
+Test Mesure = 
+
+Test Mesure = 
+
+Test Mesure = FORMAT(SUM(reel[reel]), "### ### ### $")
+
+Test Mesure = FORMAT(SUM(reel[reel]), "### ### ### $")
+
+Test Mesure = FORMAT(SUM(reel[reel]), "### ### ### $")
+
