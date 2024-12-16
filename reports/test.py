@@ -64,7 +64,7 @@ date_column_name="Date"
 #)
 
 
-# Ajout mesure_type value, percentage 
+
 mesure = Mesure(
     name="TotalReelY-1_0V",
     mesure_type="SUM",
