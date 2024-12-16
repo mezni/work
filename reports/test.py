@@ -27,8 +27,8 @@ class Mesure:
     VAR _end_date = IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()) {self.period_end} + 1, 3, 31), DATE(YEAR(TODAY()) {self.period_end}, 3, 31))              
     VAR _result1 = CALCULATE(
         {self.mesure_type}({self.table_name}[{self.column_name}]),
-        dimCalendrier[Date] >= _start_date &&
-        dimCalendrier[Date] <= _end_date
+        {date_table_name}[{date_column_name}] >= _start_date &&
+        {date_table_name}[{date_column_name}] <= _end_date
         )"""
                 if self.mesure_format:
                         expression += f"\n  VAR result = FORMAT(_result1, \"{self.mesure_format}\")"
@@ -52,7 +52,8 @@ class Mesure:
         except Exception as e:
             print(f"Error writing to file '{output_file}': {e}")
 
-
+date_table_name="dimCalendrier"
+date_column_name="Date"
 # Example usage
 #mesure = Mesure(
 #    name="TotalReelF",
