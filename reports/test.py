@@ -10,19 +10,29 @@ class Mesure:
         self.mesure_format = kwargs.get('mesure_format', None)
         self.period = kwargs.get('period', None)
         self.period_start = kwargs.get('period_start', None)
-        self.mesure_end = kwargs.get('mesure_end', None)
+        self.period_end = kwargs.get('period_end', None)
         self.mesure = ""
         self.generate()
 
     def generate(self):
         if self.mesure_type == "SUM":
             expression = f"{self.mesure_type}({self.table_name}[{self.column_name}])"
-
-        if self.mesure_format:
-            expression = f"FORMAT({expression}, \"{self.mesure_format}\")"
-
-        if self.period:
-            print (self.period)
+            if self.mesure_format:
+                expression = f"FORMAT({expression}, \"{self.mesure_format}\")"
+        
+        if self.period is not None:
+            if self.period_start is not None and self.period_end is not None:
+                expression = f"""
+    VAR _start_date =  IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()) {self.period_start}, 4, 1), DATE(YEAR(TODAY()) {self.period_start} - 1, 4, 1)) 
+    VAR _end_date = IF(MONTH(TODAY()) >= 4, DATE(YEAR(TODAY()) {self.period_end} + 1, 3, 31), DATE(YEAR(TODAY()) {self.period_end}, 3, 31))              
+    VAR _result1 = CALCULATE(
+        {self.mesure_type}({self.table_name}[{self.column_name}]),
+        dimCalendrier[Date] >= _start_date &&
+        dimCalendrier[Date] <= _end_date
+        )"""
+                if self.mesure_format:
+                        expression += f"\n  VAR result = FORMAT(_result1, \"{self.mesure_format}\")"
+                expression += f"\n  RETURN _result"
 
         self.mesure = expression
 
@@ -44,16 +54,16 @@ class Mesure:
 
 
 # Example usage
-mesure = Mesure(
-    name="TotalReelF",
-    mesure_type="SUM",
-    table_name="reel",
-    column_name="reel",
-    mesure_format="### ### ### $"
-)
+#mesure = Mesure(
+#    name="TotalReelF",
+#    mesure_type="SUM",
+#    table_name="reel",
+#    column_name="reel",
+#    mesure_format="### ### ### $"
+#)
 
 mesure = Mesure(
-    name="TotalReelF",
+    name="TotalReelY-1_0",
     mesure_type="SUM",
     table_name="reel",
     column_name="reel",
