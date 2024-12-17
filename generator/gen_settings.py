@@ -2,23 +2,74 @@ import random
 import yaml
 from tinydb import TinyDB
 
-# Function to read MSISDNs from TinyDB
-def save_msisdns_to_db(msisdns, db_path="settings.json"):
+def save_customers_to_db(customers, db_path="settings.json"):
     """
-    Save MSISDNs to separate TinyDB tables for local, national, and international MSISDNs.
-    :param msisdns: Dictionary of MSISDN lists for different types (local, national, international)
+    Save customers to separate TinyDB tables for local, national, and international customers.
+    :param customers: Dictionary of customer lists for different types (local, national, international)
     :param db_path: Path to the TinyDB database file
     """
     # Initialize TinyDB
     db = TinyDB(db_path)
 
-    # Insert MSISDNs into the respective tables
-    for msisdn_type, msisdn_list in msisdns.items():
-        table = db.table(f"msisdn_{msisdn_type}")
-        for msisdn in msisdn_list:
-            table.insert({"msisdn": msisdn})
+    # Insert customers into the respective tables
+    for customer_type, customer_list in customers.items():
+        if customer_type == 'local':
+            table = db.table('customer_home')
+        elif customer_type == 'national':
+            table = db.table('customer_national')
+        elif customer_type == 'international':
+            table = db.table('customer_international')
+        for customer in customer_list:
+            table.insert(customer)
 
-    print(f"{sum(len(msisdn_list) for msisdn_list in msisdns.values())} MSISDN(s) saved to '{db_path}'")
+    print(f"{sum(len(customer_list) for customer_list in customers.values())} customer(s) saved to '{db_path}'")
+
+# Function to generate a valid IMEI
+def generate_imei():
+    """
+    Generate a valid IMEI (International Mobile Equipment Identity).
+    :return: IMEI as a string
+    """
+    # Generate the first 14 digits randomly
+    imei = [str(random.randint(0, 9)) for _ in range(14)]
+
+    # Calculate the check digit using the Luhn algorithm
+    sum = 0
+    alt = 0
+    for i in range(14):
+        digit = int(imei[i])
+        if alt == 1:
+            digit *= 2
+            if digit > 9:
+                digit -= 9
+        sum += digit
+        alt = 1 - alt
+    check_digit = (10 - (sum % 10)) % 10
+
+    # Append the check digit to the IMEI
+    imei.append(str(check_digit))
+
+    return ''.join(imei)
+
+
+def generate_imsi():
+    """
+    Generate a valid IMSI (International Mobile Subscriber Identity).
+    :return: IMSI as a string
+    """
+    # Generate the MCC (Mobile Country Code)
+    mcc = str(random.randint(100, 999))
+
+    # Generate the MNC (Mobile Network Code)
+    mnc = str(random.randint(0, 999))
+
+    # Generate the MSIN (Mobile Subscriber Identification Number)
+    msin = str(random.randint(0, 999999999))
+
+    # Construct the IMSI
+    imsi = f"{mcc}{mnc}{msin}"
+
+    return imsi
 
 # Function to generate MSISDN based on the type
 def generate_msisdn(msisdn_type, config):
@@ -58,29 +109,32 @@ def generate_msisdn(msisdn_type, config):
     
     return msisdn
 
-# Function to generate MSISDNs for all types (local, national, international)
-def generate_all_msisdns(config):
+def generate_all_customers(config):
     """
-    Generate MSISDNs for all types and save them in separate lists.
-    :param config: Configuration dictionary containing MSISDN generation settings
-    :return: Dictionary with MSISDNs for each type
+    Generate customers for all types.
+    :param config: Configuration dictionary containing customer generation settings
+    :return: Dictionary with customers for each type
     """
-    msisdns = {}
+    customers = {}
+    # Generate customers for each type
+    for customer_type in ['local', 'national', 'international']:
+        customers[customer_type] = []
+        for _ in range(config['msisdn'][customer_type]['count']):
+            msisdn = generate_msisdn(customer_type, config)
+            imei = generate_imei()
+            imsi = generate_imsi()
+            customers[customer_type].append({"msisdn": msisdn, "imei": imei, "imsi": imsi})
 
-    # Generate MSISDNs for each type
-    for msisdn_type in ['local', 'national', 'international']:
-        msisdns[msisdn_type] = [generate_msisdn(msisdn_type, config) for _ in range(config['msisdn'][msisdn_type]['count'])]
+    return customers
 
-    return msisdns
-
-# Main function to load config and generate MSISDNs
+# Main function to load config and generate customers
 if __name__ == "__main__":
     # Load configuration from YAML
     with open("settings.yaml", "r") as f:
         config = yaml.safe_load(f)
 
-    # Generate MSISDNs
-    msisdns = generate_all_msisdns(config)
+    # Generate customers
+    customers = generate_all_customers(config)
 
-    # Save MSISDNs to TinyDB
-    save_msisdns_to_db(msisdns)
+    # Save customers to TinyDB
+    save_customers_to_db(customers)

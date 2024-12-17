@@ -6,23 +6,32 @@ from tinydb import TinyDB, Query
 # Function to read MSISDNs from TinyDB
 def read_msisdns(db_path="settings.json"):
     """
-    Read MSISDNs from TinyDB (both local and international).
+    Read MSISDNs from TinyDB (local, national, and international).
     :param db_path: Path to the TinyDB database file
-    :return: Tuple (list of local MSISDNs, list of international MSISDNs)
+    :return: Dictionary of MSISDN lists for local, national, and international types
     """
     try:
         # Initialize TinyDB
         db = TinyDB(db_path)
 
         # Read data from the local MSISDN table
-        msisdns_table = db.table('msisdns')
-        local_msisdns = [entry['msisdn'] for entry in msisdns_table.all()]
+        local_table = db.table('msisdn_local')
+        local_msisdns = [entry['msisdn'] for entry in local_table.all()]
+
+        # Read data from the national MSISDN table
+        national_table = db.table('msisdn_national')
+        national_msisdns = [entry['msisdn'] for entry in national_table.all()]
 
         # Read data from the international MSISDN table
-        international_table = db.table('msisdns_international')
+        international_table = db.table('msisdn_international')
         international_msisdns = [entry['msisdn'] for entry in international_table.all()]
 
-        return local_msisdns, international_msisdns
+        return {
+            'local': local_msisdns,
+            'national': national_msisdns,
+            'international': international_msisdns
+        }
+
     except FileNotFoundError:
         print("Error: The settings.json file was not found.")
         exit(1)
@@ -88,35 +97,46 @@ def save_cdr_to_file(cdr, filename="cdrs.json"):
 # Main function to display MSISDNs and generate CDRs
 if __name__ == "__main__":
     # Read MSISDNs from the database
-    local_msisdns, international_msisdns = read_msisdns("settings.json")
+    msisdns = read_msisdns("settings.json")
 
-    # Choose random caller and recipient from the local MSISDNs
-    caller = random.choice(local_msisdns)
-    recipient = random.choice(local_msisdns)
+    # Access each MSISDN type
+    local_msisdns = msisdns['local']
+    national_msisdns = msisdns['national']
+    international_msisdns = msisdns['international']
 
-    # Ensure caller and recipient are not the same
-    while caller == recipient:
-        recipient = random.choice(local_msisdns)
+    # Generate 100 CDRs
+    for _ in range(100):
+        # Randomly decide the type of call (with the specified probabilities)
+        call_type = random.choices(
+            ['local_to_local', 'local_to_national', 'national_to_local', 'local_to_international', 'international_to_local'],
+            weights=[60, 35, 35, 5, 5],
+            k=1
+        )[0]
 
-    # Generate Ericsson CDR
-    cdr = generate_ericsson_cdr(caller, recipient)
+        # Determine caller and recipient based on the call type
+        if call_type == 'local_to_local':
+            caller = random.choice(local_msisdns)
+            recipient = random.choice(local_msisdns)
+        elif call_type == 'local_to_national':
+            caller = random.choice(local_msisdns)
+            recipient = random.choice(national_msisdns)
+        elif call_type == 'national_to_local':
+            caller = random.choice(national_msisdns)
+            recipient = random.choice(local_msisdns)
+        elif call_type == 'local_to_international':
+            caller = random.choice(local_msisdns)
+            recipient = random.choice(international_msisdns)
+        elif call_type == 'international_to_local':
+            caller = random.choice(international_msisdns)
+            recipient = random.choice(local_msisdns)
 
-    # Output the generated CDR
-    print("Generated Ericsson CDR:")
-    for key, value in cdr.items():
-        print(f"{key}: {value}")
+        # Generate Ericsson CDR
+        cdr = generate_ericsson_cdr(caller, recipient)
 
-    # Save CDR to file
-    save_cdr_to_file(cdr)
-    
-    # Optionally, if you want to generate multiple CDRs, you can loop this:
-    # for _ in range(5):  # Generate 5 CDRs
-    #     caller = random.choice(local_msisdns)
-    #     recipient = random.choice(local_msisdns)
-    #     while caller == recipient:
-    #         recipient = random.choice(local_msisdns)
-    #     cdr = generate_ericsson_cdr(caller, recipient)
-    #     print("\nGenerated Ericsson CDR:")
-    #     for key, value in cdr.items():
-    #         print(f"{key}: {value}")
-    #     save_cdr_to_file(cdr)
+        # Output the generated CDR
+        print("\nGenerated Ericsson CDR:")
+        for key, value in cdr.items():
+            print(f"{key}: {value}")
+
+        # Save CDR to file
+        save_cdr_to_file(cdr)
