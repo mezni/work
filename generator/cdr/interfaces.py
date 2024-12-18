@@ -43,3 +43,15 @@ class CustomerRepository(ABC):
             msisdn (str): The MSISDN of the customer to remove.
         """
         pass
+
+
+
+class NodeRepository(ABC):
+    def __init__(self):
+        self.nodes = []
+
+    def add(self, node):
+        self.nodes.append(node)
+
+    def get_all(self):
+        return self.nodes

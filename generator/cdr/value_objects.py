@@ -57,3 +57,16 @@ class IMSI:
 
     def to_dict(self):
         return {"number": self.number}
+
+class Address:
+    def __init__(self, ip: str):
+        self.ip = ip
+
+    def __str__(self):
+        return self.ip
+
+    def __hash__(self):
+        return hash(self.ip)
+
+    def to_dict(self):
+        return {"ip": self.ip}

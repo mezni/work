@@ -1,4 +1,4 @@
-from services import CustomerService
+from services import CustomerService, NodeService
 from persistance import TidyDB
 
 config = {
@@ -36,3 +36,22 @@ customer_service.save_customers()
 # Fetch and print all customers from the repository
 for customer in repository.get_all():
     print(customer)
+
+config = {
+    "network": {
+        "mcc": "212",
+        "mnc": "01",
+        "3g": {"count": 10},
+        "4g": {"count": 10}
+    }
+}
+
+repository = TidyDB('config.json','networks')
+node_service = NodeService(config, repository)
+
+# Generate nodes from the configuration
+nodes = node_service.generate_nodes_from_config()
+
+# Print generated nodes
+for node in repository.get_all():
+    print(node.to_dict())
