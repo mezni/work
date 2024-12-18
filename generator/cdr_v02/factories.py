@@ -101,3 +101,22 @@ class IMEIFactory:
             return ''.join(imei)
         except Exception as e:
             return f"Error generating IMEI: {str(e)}"
+
+
+
+class MSISDNFactory:
+    @staticmethod
+    def generate(msisdn_type: str, country_code: str, ndc: list, prefix: list = None, digits: int = 6) -> str:
+        """Generate a random MSISDN based on the given type and configuration."""
+        if msisdn_type in ["home", "national"]:
+            # Use a random NDC range and generate the remaining digits
+            ndc_start, ndc_end = random.choice(ndc)
+            msisdn = f"{country_code}{random.randint(ndc_start, ndc_end):0{digits}d}"
+        elif msisdn_type == "international":
+            # Use a random prefix and generate the remaining digits
+            msisdn = f"{random.choice(prefix)}{random.randint(10**(digits-1), 10**digits - 1)}"
+        else:
+            raise ValueError(f"Invalid MSISDN type: {msisdn_type}")
+        return msisdn
+
+
