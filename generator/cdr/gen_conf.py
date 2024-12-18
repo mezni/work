@@ -23,8 +23,9 @@ config = {
     }
 }
 
+
 # Instantiate the repository (TidyDB for this example)
-repository = TidyDB()
+repository = TidyDB('config.json','customers')
 
 # Instantiate the CustomerService with the repository
 customer_service = CustomerService(config, repository)

@@ -24,3 +24,12 @@ class Customer:
 
     def __hash__(self):
         return hash((self.customer_type, self.msisdn, self.imsi, self.imei))
+
+
+    def to_dict(self):
+        return {
+            "customer_type": self.customer_type,
+            "msisdn": str(self.msisdn),  
+            "imsi": str(self.imsi),      
+            "imei": str(self.imei)      
+        }

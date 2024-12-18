@@ -15,6 +15,8 @@ class MSISDN:
     def __hash__(self):
         return hash(self.number)
 
+    def to_dict(self):
+        return {"number": self.number}
 
 class IMEI:
     def __init__(self, number: str):
@@ -33,6 +35,8 @@ class IMEI:
     def __hash__(self):
         return hash(self.number)
 
+    def to_dict(self):
+        return {"number": self.number}
 
 class IMSI:
     def __init__(self, number: str):
@@ -50,3 +54,6 @@ class IMSI:
 
     def __hash__(self):
         return hash(self.number)
+
+    def to_dict(self):
+        return {"number": self.number}

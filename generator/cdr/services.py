@@ -1,4 +1,5 @@
 import json
+import uuid
 import random
 from typing import List
 from random import randint
@@ -19,24 +20,27 @@ class CustomerService:
         if msisdn_type == "home" or msisdn_type == "national":
             country_code = msisdn_config['country_code']
             ndc_range = msisdn_config['ndc_ranges']
+            prefix = None
             digits = msisdn_config['digits']
             count = msisdn_config['count']
             msisdns = []
 
             for _ in range(count):
                 ndc = random.choice(ndc_range)  # Randomly select a NDC range
-                msisdns.append(str(MSISDNFactory.generate(msisdn_type, country_code, ndc, digits=digits)))
+                msisdns.append(MSISDNFactory.generate(msisdn_type, country_code, ndc, prefix,digits=digits))
 
             return msisdns
 
         elif msisdn_type == "international":
+            country_code = None
+            ndc = None
             prefix = msisdn_config['prefixes']
             digits = msisdn_config['digits']
             count = msisdn_config['count']
             msisdns = []
 
             for _ in range(count):
-                msisdns.append(str(MSISDNFactory.generate(msisdn_type, prefix=prefix, digits=digits)))
+                msisdns.append(MSISDNFactory.generate(msisdn_type, country_code, ndc, prefix, digits=digits))
 
             return msisdns
 
@@ -54,8 +58,8 @@ class CustomerService:
                 customer = Customer(
                     customer_type=msisdn_type,
                     msisdn=msisdn,
-                    imsi=str(IMSI(IMSIFactory.generate())),
-                    imei=str(IMEI(IMEIFactory.generate()))
+                    imsi=IMSI(IMSIFactory.generate()),  # No need for str()
+                    imei=IMEI(IMEIFactory.generate())   # No need for str()
                 )
                 customers.append(customer)
 
@@ -65,5 +69,8 @@ class CustomerService:
         """Generates and saves customers to the repository."""
         customers = self.generate_customers()
         for customer in customers:
-            print (customer)
-            self.repository.add(customer)
+            # Use customer.msisdn as the key to store it in the TidyDB
+            customer_key = f"CUS{uuid.uuid4().hex[:8]}"
+
+            # Add the customer to the repository using the modified key
+            self.repository.add(customer_key, customer)

@@ -1,0 +1,184 @@
+{
+    "customers": {
+        "CUS3d3dcd34": {
+            "customer_type": "home",
+            "msisdn": "+21650324534",
+            "imsi": "572110088729088",
+            "imei": "510888289864986"
+        },
+        "CUS7204a072": {
+            "customer_type": "home",
+            "msisdn": "+21653460904",
+            "imsi": "873959955675370",
+            "imei": "776281783317587"
+        },
+        "CUS6f02c978": {
+            "customer_type": "home",
+            "msisdn": "+21630531218",
+            "imsi": "531558513179086",
+            "imei": "061190026224357"
+        },
+        "CUS80168eb7": {
+            "customer_type": "home",
+            "msisdn": "+21651814393",
+            "imsi": "854992999566753",
+            "imei": "025470692477025"
+        },
+        "CUSd3659017": {
+            "customer_type": "home",
+            "msisdn": "+21632637217",
+            "imsi": "992548235361300",
+            "imei": "968623081787128"
+        },
+        "CUSc466a02e": {
+            "customer_type": "home",
+            "msisdn": "+21652206786",
+            "imsi": "972257113525260",
+            "imei": "425969847948539"
+        },
+        "CUSedb6e9e9": {
+            "customer_type": "home",
+            "msisdn": "+21634804684",
+            "imsi": "851887944375221",
+            "imei": "921602530063386"
+        },
+        "CUSf8f59100": {
+            "customer_type": "home",
+            "msisdn": "+21652151672",
+            "imsi": "479586241508204",
+            "imei": "132171532999802"
+        },
+        "CUS4f87e8ae": {
+            "customer_type": "home",
+            "msisdn": "+21635282760",
+            "imsi": "509116664420096",
+            "imei": "294250471853594"
+        },
+        "CUSde1091d3": {
+            "customer_type": "home",
+            "msisdn": "+21632605588",
+            "imsi": "716307534220382",
+            "imei": "243092104482512"
+        },
+        "CUS473a55e3": {
+            "customer_type": "national",
+            "msisdn": "+21697434595",
+            "imsi": "674670084083105",
+            "imei": "794933955858743"
+        },
+        "CUSe2c10366": {
+            "customer_type": "national",
+            "msisdn": "+21629964021",
+            "imsi": "701614276644533",
+            "imei": "270086934717481"
+        },
+        "CUSb954dc2d": {
+            "customer_type": "national",
+            "msisdn": "+21696828938",
+            "imsi": "923346492590053",
+            "imei": "049050089700601"
+        },
+        "CUSb7154d28": {
+            "customer_type": "national",
+            "msisdn": "+21625928921",
+            "imsi": "212823753204259",
+            "imei": "938819976191817"
+        },
+        "CUSd0f2a66c": {
+            "customer_type": "national",
+            "msisdn": "+21693450432",
+            "imsi": "760790782706865",
+            "imei": "602562114086979"
+        },
+        "CUS352a4bf5": {
+            "customer_type": "national",
+            "msisdn": "+21699758649",
+            "imsi": "632128980261733",
+            "imei": "887782860867325"
+        },
+        "CUSf61bf803": {
+            "customer_type": "national",
+            "msisdn": "+21621337915",
+            "imsi": "957028311226863",
+            "imei": "245328998201644"
+        },
+        "CUS38c482bb": {
+            "customer_type": "national",
+            "msisdn": "+21623382647",
+            "imsi": "143159131808987",
+            "imei": "955769584440585"
+        },
+        "CUSc79c90eb": {
+            "customer_type": "national",
+            "msisdn": "+21629986241",
+            "imsi": "756468324460930",
+            "imei": "868807462705111"
+        },
+        "CUS9f0271c5": {
+            "customer_type": "national",
+            "msisdn": "+21699591674",
+            "imsi": "162569673214916",
+            "imei": "623694134548616"
+        },
+        "CUS424ff149": {
+            "customer_type": "international",
+            "msisdn": "+212696702535",
+            "imsi": "131563730442717",
+            "imei": "764711736562008"
+        },
+        "CUSda74d80f": {
+            "customer_type": "international",
+            "msisdn": "+49142827513",
+            "imsi": "616265399478220",
+            "imei": "843092613579067"
+        },
+        "CUS38a601e6": {
+            "customer_type": "international",
+            "msisdn": "+49118885752",
+            "imsi": "908761736327102",
+            "imei": "066087282396157"
+        },
+        "CUS1a7ab89f": {
+            "customer_type": "international",
+            "msisdn": "+33667605725",
+            "imsi": "209388337346794",
+            "imei": "161659751178896"
+        },
+        "CUSe5c6468e": {
+            "customer_type": "international",
+            "msisdn": "+212647168739",
+            "imsi": "464662771164283",
+            "imei": "526023908510248"
+        },
+        "CUS4dcf91f3": {
+            "customer_type": "international",
+            "msisdn": "+212630017038",
+            "imsi": "787521091449629",
+            "imei": "562914021732880"
+        },
+        "CUS4853ec14": {
+            "customer_type": "international",
+            "msisdn": "+44164437610",
+            "imsi": "966474322180097",
+            "imei": "970913586299117"
+        },
+        "CUS87f661d7": {
+            "customer_type": "international",
+            "msisdn": "+212671659850",
+            "imsi": "880485826703414",
+            "imei": "230865934392356"
+        },
+        "CUSe5a5aa22": {
+            "customer_type": "international",
+            "msisdn": "+49159509861",
+            "imsi": "319117200576088",
+            "imei": "871884470200208"
+        },
+        "CUS17485911": {
+            "customer_type": "international",
+            "msisdn": "+212640363661",
+            "imsi": "593366663598315",
+            "imei": "876579254625134"
+        }
+    }
+}
