@@ -23,9 +23,9 @@ class MSISDNFactory:
             if digits < 1:
                 raise ValueError("The 'digits' parameter must be a positive integer.")
 
-            if msisdn_type in ("local", "national"):
+            if msisdn_type in ("home", "national"):
                 if not country_code or ndc is None:
-                    raise ValueError("'country_code' and 'ndc' are required for 'local' or 'national' types.")
+                    raise ValueError("'country_code' and 'ndc' are required for 'home' or 'national' types.")
 
                 # Determine the NDC value
                 if isinstance(ndc, int):

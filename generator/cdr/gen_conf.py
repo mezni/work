@@ -1,17 +1,37 @@
-from factories import MSISDNFactory
+from services import CustomerService
+from persistance import TidyDB
 
+config = {
+    "msisdn": {
+        "home": {
+            "country_code": "+216",
+            "ndc_ranges": [[30, 35], [50, 55]],
+            "digits": 6,
+            "count": 10
+        },
+        "national": {
+            "country_code": "+216",
+            "ndc_ranges": [[20, 29], [90, 99]],
+            "digits": 6,
+            "count": 10
+        },
+        "international": {
+            "prefixes": ["+2126", "+336", "+441", "+491"],
+            "digits": 8,
+            "count": 10
+        }
+    }
+}
 
+# Instantiate the repository (TidyDB for this example)
+repository = TidyDB()
 
-local_msisdn = MSISDNFactory.generate(
-    msisdn_type="local",
-    country_code="1",
-    ndc=234  # Single NDC
-)
-print(f"Generated Local MSISDN (Default Digits): {local_msisdn}")
+# Instantiate the CustomerService with the repository
+customer_service = CustomerService(config, repository)
 
-# Example for 'international' MSISDN with default digits
-international_msisdn = MSISDNFactory.generate(
-    msisdn_type="international",
-    prefix=["+44", "+1", "+91"]
-)
-print(f"Generated International MSISDN (Default Digits): {international_msisdn}")
+# Save the generated customers into the repository
+customer_service.save_customers()
+
+# Fetch and print all customers from the repository
+for customer in repository.get_all():
+    print(customer)
