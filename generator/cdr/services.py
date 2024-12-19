@@ -1,8 +1,9 @@
-from typing import List
+from typing import List, Optional
 import random
 import uuid
+from value_objects import QoS
 from entities import Customer, Node, Bearer
-from factories import MSISDNFactory, IMSIFactory, IMEIFactory, BearerFactory
+from factories import MSISDNFactory, IMSIFactory, IMEIFactory
 from interfaces import CustomerRepository, NodeRepository, BearerRepository
 
 class CustomerService:
@@ -81,6 +82,24 @@ class CustomerService:
                 self.repository.add(customer_key, customer)
             except Exception as e:
                 print(f"Error saving customer {customer.msisdn}: {e}")
+
+    def get_random(self, customer_type: str = None) -> Optional[Customer]:
+        """
+        Retrieves a random customer from the repository.
+
+        Args:
+            customer_type (str, optional): Type of customer to filter by (e.g., 'home'). If None, all types are considered.
+
+        Returns:
+            Optional[Customer]: A random customer object, or None if no customers exist.
+        """
+        all_customers = self.repository.get_all()
+        
+        # Filter by customer type if provided
+        if customer_type:
+            all_customers = [customer for customer in all_customers if customer.customer_type == customer_type]
+
+        return random.choice(all_customers) if all_customers else None
 
 class NodeService:
     def __init__(self, config: dict, node_repository: NodeRepository):
@@ -196,6 +215,24 @@ class NodeService:
             except Exception as e:
                 print(f"Error saving node {node.network_type}: {e}")
 
+    def get_random(self, network_type: str = None) -> Optional[Node]:
+        """
+        Retrieves a random node from the repository.
+
+        Args:
+            network_type (str, optional): Type of node to filter by (e.g., '3G', '4G'). If None, all types are considered.
+
+        Returns:
+            Optional[Node]: A random node object, or None if no nodes exist.
+        """
+        all_nodes = self.repository.get_all()
+        
+        # Filter by network type if provided
+        if network_type:
+            all_nodes = [node for node in all_nodes if node.network_type == network_type]
+
+        return random.choice(all_nodes) if all_nodes else None
+
 class BearerService:
     def __init__(self, config: dict, bearer_repository: BearerRepository):
         """
@@ -208,50 +245,59 @@ class BearerService:
         self.config = config
         self.repository = bearer_repository
 
-    def generate_bearers(self) -> List[Bearer]:
+    def generate_qos(self, qos_config: dict) -> QoS:
         """
-        Generates a list of bearers based on the configuration.
-        
+        Generates a QoS object from the provided configuration.
+
+        Args:
+            qos_config (dict): QoS configuration containing 'gbr' and 'mbr'.
+
         Returns:
-            List[Bearer]: A list of generated Bearer objects.
+            QoS: A QoS object with the specified parameters.
         """
-        bearers = []
-        for bearer_type in self.config['bearer']:
-            count = self.config['bearer'][bearer_type].get('count', 1)  # Number of bearers to generate
-            for _ in range(count):
-                bearer = BearerFactory.create_bearer(
-                    bearer_id=uuid.uuid4().int,  # Unique ID for the bearer
-                    bearer_type=bearer_type
-                )
-                bearers.append(bearer)
-        return bearers
+        gbr = qos_config.get('gbr', 0)
+        mbr = qos_config.get('mbr', 1000)
+        return QoS(gbr, mbr)
+
+    def generate_bearer(self, bearer_type: str, qos_config: dict) -> Bearer:
+        """
+        Generates a new Bearer with a specific type and QoS.
+
+        Args:
+            bearer_type (str): The type of bearer to generate (e.g., 'Default Bearer', 'Dedicated Bearer').
+            qos_config (dict): The QoS configuration for the bearer.
+
+        Returns:
+            Bearer: A Bearer object with the specified type and QoS.
+        """
+        qos = self.generate_qos(qos_config)
+        bearer_id = random.randint(100000, 999999)  # Generate a random bearer ID
+        return Bearer(bearer_id, bearer_type, qos)
 
     def save_bearers(self) -> None:
         """
-        Saves generated bearers into the repository.
+        Generates and saves bearers to the repository based on the configuration.
         """
-        bearers = self.generate_bearers()
-        for bearer in bearers:
-            bearer_key = f"BEARER{uuid.uuid4().hex[:8]}"
-            try:
-                self.repository.add(bearer_key, bearer)
-            except Exception as e:
-                print(f"Error saving bearer with ID {bearer.bearer_id}: {e}")
+        for bearer_type, bearer_config in self.config['bearer'].items():
+            count = bearer_config.get('count', 1)
+            qos_config = bearer_config.get('qos', {})
 
-    def get_random_bearer(self) -> Bearer:
-        """
-        Fetches a random bearer from the repository.
+            for _ in range(count):
+                bearer = self.generate_bearer(bearer_type, qos_config)
+                bearer_key = f"BEA{random.randint(10000000, 99999999)}"
+                try:
+                    # Save bearer with a generated key
+                    self.repository.add(bearer_key, bearer)
+                except Exception as e:
+                    print(f"Error saving bearer {bearer.bearer_id}: {e}")
 
-        Returns:
-            Bearer: A random bearer.
+    def get_random(self) -> Optional[Bearer]:
         """
-        return self.repository.get_random()
-
-    def get_all_bearers(self) -> List[Bearer]:
-        """
-        Retrieves all bearers from the repository.
+        Retrieves a random bearer from the repository.
 
         Returns:
-            List[Bearer]: A list of all bearers.
+            Optional[Bearer]: A random bearer object, or None if no bearers exist.
         """
-        return self.repository.get_all()
+        all_bearers = self.repository.get_all()
+        return random.choice(all_bearers) if all_bearers else None
+

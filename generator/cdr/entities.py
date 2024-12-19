@@ -84,7 +84,13 @@ class Bearer:
         self.qos = qos
 
     def _validate(self, bearer_id: int, bearer_type: str, qos: QoS) -> bool:
-        return isinstance(bearer_id, int) and bearer_id > 0 and isinstance(bearer_type, str) and bearer_type and isinstance(qos, QoS)
+        if not isinstance(bearer_id, int) or bearer_id <= 0:
+            raise ValueError(f"Bearer ID must be a positive integer, got: {bearer_id}")
+        if not isinstance(bearer_type, str) or not bearer_type:
+            raise ValueError(f"Bearer Type must be a non-empty string, got: {bearer_type}")
+        if not isinstance(qos, QoS):
+            raise ValueError(f"QoS must be an instance of QoS class, got: {type(qos)}")
+        return True
 
     def __repr__(self):
         return f"Bearer(ID={self.bearer_id}, Type={self.bearer_type}, QoS={self.qos})"

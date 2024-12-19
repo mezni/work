@@ -105,31 +105,4 @@ class IMEIFactory:
             return f"Error generating IMEI: {str(e)}"
 
 
-class BearerFactory:
-    @staticmethod
-    def generate_qos() -> QoS:
-        """
-        Generates a random QoS object with Guaranteed Bit Rate (GBR) and Maximum Bit Rate (MBR).
-        
-        Returns:
-            QoS: A new QoS object with random GBR and MBR values.
-        """
-        gbr = random.randint(100, 1000)  # Guaranteed Bit Rate (GBR) in kbps
-        mbr = random.randint(1000, 10000)  # Maximum Bit Rate (MBR) in kbps
-        return QoS(gbr, mbr)
-
-    @staticmethod
-    def create_bearer(bearer_id: int, bearer_type: str) -> Bearer:
-        """
-        Creates a new Bearer object with a randomly generated QoS and the specified bearer_id and bearer_type.
-
-        Args:
-            bearer_id (int): The unique identifier for the bearer.
-            bearer_type (str): The type of the bearer (e.g., "Default", "Dedicated").
-
-        Returns:
-            Bearer: A new Bearer object with the given ID, type, and random QoS.
-        """
-        qos = BearerFactory.generate_qos()  # Generate QoS for the bearer
-        return Bearer(bearer_id, bearer_type, qos)  # Create and return the Bearer object
 

@@ -34,6 +34,29 @@ def main():
             "mnc": "01",
             "3g": {"count": 10},
             "4g": {"count": 10}
+        },
+        'bearer': {
+            'Default Bearer': {
+                'count': 3,
+                'qos': {
+                    'gbr': 1,  # Guaranteed Bit Rate
+                    'mbr': 1000  # Maximum Bit Rate
+                }
+            },
+            'Dedicated Bearer': {
+                'count': 3,
+                'qos': {
+                    'gbr': 500,  # GBR in kbps
+                    'mbr': 5000  # MBR in kbps
+                }
+            },
+            'Video Bearer': {  # Fixed typo here
+                'count': 3,
+                'qos': {
+                    'gbr': 1000,  # GBR in kbps
+                    'mbr': 10000  # MBR in kbps
+                }
+            }
         }
     }
 
@@ -42,17 +65,21 @@ def main():
 
     # Initialize the repository using the db_path variable
     customer_repo = TinyDBCustomerRepository(db_path)
-    customer_service = CustomerService(config,customer_repo)
+    customer_service = CustomerService(config, customer_repo)
     node_repo = TinyDBNodeRepository(db_path)
-    node_service = NodeService(config,node_repo)
+    node_service = NodeService(config, node_repo)
     bearer_repo = TinyDBBearerRepository(db_path)
-    bearer_service = BearerService(config,bearer_repo)
-#    customer_service.save_customers()
-#    node_service.save_nodes()
-    bearer_service.save_bearers()
-    print (customer_repo.get_random("home"))
-    print (node_repo.get_random("4G"))
-    print (bearer_service.get_random())
+    bearer_service = BearerService(config, bearer_repo)
+
+
+    customer_service.save_customers()  
+    node_service.save_nodes()  
+    bearer_service.save_bearers()  
+
+
+    print(customer_service.get_random("home"))
+    print(node_service.get_random("4G"))
+    print(bearer_service.get_random())
 
 if __name__ == "__main__":
     main()
