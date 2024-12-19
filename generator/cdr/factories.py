@@ -2,7 +2,7 @@ import random
 
 class MSISDNFactory:
     @staticmethod
-    def generate(msisdn_type: str, country_code=None, ndc=None, prefix=None, digits=6) -> str:
+    def generate(msisdn_type: str, country_code=None, ndc_ranges=None, prefixes=None, digits=6) -> str:
         """
         Generates an MSISDN based on the type and provided parameters.
 
@@ -24,14 +24,15 @@ class MSISDNFactory:
                 raise ValueError("The 'digits' parameter must be a positive integer.")
 
             if msisdn_type in ("home", "national"):
-                if not country_code or ndc is None:
+                if not country_code or ndc_ranges is None:
                     raise ValueError("'country_code' and 'ndc' are required for 'home' or 'national' types.")
 
                 # Determine the NDC value
-                if isinstance(ndc, int):
-                    ndc_value = ndc  # Use the single integer as the NDC
-                elif isinstance(ndc, (list, tuple)) and len(ndc) == 2:
-                    ndc_value = random.randint(ndc[0], ndc[1])  # Random NDC within the range
+                if isinstance(ndc_ranges, int):
+                    ndc_value = ndc_ranges  # Use the single integer as the NDC
+                elif isinstance(ndc_ranges, (list, tuple)) and len(ndc_ranges) == 2:
+                    selected_range = random.choice(ndc_ranges)  
+                    ndc_value = random.randint(selected_range[0], selected_range[1])  
                 else:
                     raise ValueError("'ndc' must be an integer or a range (list/tuple) with two values.")
 
@@ -39,10 +40,10 @@ class MSISDNFactory:
                 return f"{country_code}{ndc_value}{subscriber_number}"
 
             elif msisdn_type == "international":
-                if not prefix:
+                if not prefixes:
                     raise ValueError("'prefix' is required for 'international' type.")
 
-                selected_prefix = random.choice(prefix)  # Randomly select a prefix
+                selected_prefix = random.choice(prefixes)  # Randomly select a prefix
                 subscriber_number = random.randint(10**(digits - 1), 10**digits - 1)  # Random subscriber number
                 return f"{selected_prefix}{subscriber_number}"
 

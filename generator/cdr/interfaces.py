@@ -1,28 +1,32 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
-from entities import Customer, Node  # Assuming Customer and Node are defined in entities.py
+from entities import Customer, Node
 
 class CustomerRepository(ABC):
     """
     Abstract base class for a repository that manages customers.
     """
     @abstractmethod
-    def add(self, customer: Customer) -> None:
+    def add(self, key: str, customer: Customer) -> None: 
         """
         Adds a customer to the repository.
 
         Args:
+            key (str): The unique identifier for the customer.
             customer (Customer): The customer entity to be added.
         """
         pass
 
     @abstractmethod
-    def get_random(self) -> Optional[Customer]:
+    def get_random(self, customer_type: str) -> Optional[Customer]:
         """
-        Retrieves a random customer from the repository.
+        Retrieves a random customer from the repository by type.
+
+        Args:
+            customer_type (str): The type of customer to retrieve.
 
         Returns:
-            Optional[Customer]: A random customer, or None if the repository is empty.
+            Optional[Customer]: A random customer of the specified type, or None if not found.
         """
         pass
 
@@ -46,17 +50,17 @@ class CustomerRepository(ABC):
         """
         pass
 
-
 class NodeRepository(ABC):
     """
     Abstract base class for a repository that manages nodes.
     """
     @abstractmethod
-    def add(self, node: Node) -> None:
+    def add(self, key: str, node: Node) -> None:
         """
         Adds a node to the repository.
 
         Args:
+            key (str): The unique identifier for the node.
             node (Node): The node entity to be added.
         """
         pass
@@ -72,11 +76,14 @@ class NodeRepository(ABC):
         pass
     
     @abstractmethod
-    def get_random(self) -> Optional[Node]:
+    def get_random(self, network_type: str) -> Optional[Node]:
         """
-        Retrieves a random node from the repository.
+        Retrieves a random node from the repository by network type.
+
+        Args:
+            network_type (str): The type of network for the node.
 
         Returns:
-            Optional[Node]: A random node, or None if the repository is empty.
+            Optional[Node]: A random node of the specified network type, or None if not found.
         """
         pass
