@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
-from entities import Customer, Node
+from entities import Customer, Node, Bearer
 
 class CustomerRepository(ABC):
     """
@@ -87,3 +87,44 @@ class NodeRepository(ABC):
             Optional[Node]: A random node of the specified network type, or None if not found.
         """
         pass
+
+
+class BearerRepository(ABC):
+    """
+    Abstract base class for a repository that manages Bearer objects.
+    """
+
+    @abstractmethod
+    def add(self, key: str, bearer: Bearer) -> None:
+        """
+        Adds a Bearer object to the repository.
+
+        Args:
+            key (str): The unique identifier for the bearer.
+            bearer (Bearer): The Bearer object to be added.
+        """
+        pass
+
+    @abstractmethod
+    def get_all(self) -> List[Bearer]:
+        """
+        Retrieves all Bearer objects in the repository.
+
+        Returns:
+            List[Bearer]: A list of all Bearer objects.
+        """
+        pass
+
+    @abstractmethod
+    def get_random(self) -> Optional[Bearer]:
+        """
+        Retrieves a Bearer object by its ID.
+
+        Args:
+            bearer_id (int): The unique ID of the bearer.
+
+        Returns:
+            Optional[Bearer]: The Bearer object with the specified ID, or None if not found.
+        """
+        pass
+

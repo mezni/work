@@ -48,5 +48,20 @@ class IMEI:
     def __repr__(self):
         return f"IMEI({self.imei!r})"
 
+class QoS:
+    def __init__(self, gbr: int, mbr: int):
+        if not self._validate(gbr, mbr):
+            raise ValueError(f"Invalid QoS values: GBR={gbr}, MBR={mbr}")
+        self.gbr = gbr  # Guaranteed Bit Rate in kbps
+        self.mbr = mbr  # Maximum Bit Rate in kbps
+
+    def _validate(self, gbr: int, mbr: int) -> bool:
+        return gbr > 0 and mbr > 0
+
+    def __repr__(self):
+        return f"QoS(GBR={self.gbr} kbps, MBR={self.mbr} kbps)"
+
+    def to_dict(self):
+        return {"GBR": self.gbr, "MBR": self.mbr}
 
 

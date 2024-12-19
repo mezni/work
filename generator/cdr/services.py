@@ -1,9 +1,9 @@
 from typing import List
 import random
 import uuid
-from entities import Customer, Node
-from factories import MSISDNFactory, IMSIFactory, IMEIFactory
-from interfaces import CustomerRepository, NodeRepository
+from entities import Customer, Node, Bearer
+from factories import MSISDNFactory, IMSIFactory, IMEIFactory, BearerFactory
+from interfaces import CustomerRepository, NodeRepository, BearerRepository
 
 class CustomerService:
     def __init__(self, config: dict, customer_repository: CustomerRepository):
@@ -196,5 +196,62 @@ class NodeService:
             except Exception as e:
                 print(f"Error saving node {node.network_type}: {e}")
 
+class BearerService:
+    def __init__(self, config: dict, bearer_repository: BearerRepository):
+        """
+        Initializes the BearerService with configuration and a bearer repository.
 
+        Args:
+            config (dict): The configuration dictionary containing bearer data.
+            bearer_repository (BearerRepository): The repository to store and manage bearers.
+        """
+        self.config = config
+        self.repository = bearer_repository
 
+    def generate_bearers(self) -> List[Bearer]:
+        """
+        Generates a list of bearers based on the configuration.
+        
+        Returns:
+            List[Bearer]: A list of generated Bearer objects.
+        """
+        bearers = []
+        for bearer_type in self.config['bearer']:
+            count = self.config['bearer'][bearer_type].get('count', 1)  # Number of bearers to generate
+            for _ in range(count):
+                bearer = BearerFactory.create_bearer(
+                    bearer_id=uuid.uuid4().int,  # Unique ID for the bearer
+                    bearer_type=bearer_type
+                )
+                bearers.append(bearer)
+        return bearers
+
+    def save_bearers(self) -> None:
+        """
+        Saves generated bearers into the repository.
+        """
+        bearers = self.generate_bearers()
+        for bearer in bearers:
+            bearer_key = f"BEARER{uuid.uuid4().hex[:8]}"
+            try:
+                self.repository.add(bearer_key, bearer)
+            except Exception as e:
+                print(f"Error saving bearer with ID {bearer.bearer_id}: {e}")
+
+    def get_random_bearer(self) -> Bearer:
+        """
+        Fetches a random bearer from the repository.
+
+        Returns:
+            Bearer: A random bearer.
+        """
+        return self.repository.get_random()
+
+    def get_all_bearers(self) -> List[Bearer]:
+        """
+        Retrieves all bearers from the repository.
+
+        Returns:
+            List[Bearer]: A list of all bearers.
+        """
+        return self.repository.get_all()

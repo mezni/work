@@ -1,6 +1,6 @@
 import logging
-from persistance import TinyDBCustomerRepository, TinyDBNodeRepository
-from services import CustomerService, NodeService
+from persistance import TinyDBCustomerRepository, TinyDBNodeRepository, TinyDBBearerRepository
+from services import CustomerService, NodeService, BearerService
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -42,14 +42,17 @@ def main():
 
     # Initialize the repository using the db_path variable
     customer_repo = TinyDBCustomerRepository(db_path)
-    node_repo = TinyDBNodeRepository(db_path)
     customer_service = CustomerService(config,customer_repo)
+    node_repo = TinyDBNodeRepository(db_path)
     node_service = NodeService(config,node_repo)
-    customer_service.save_customers()
-    node_service.save_nodes()
-
-
-
+    bearer_repo = TinyDBBearerRepository(db_path)
+    bearer_service = BearerService(config,bearer_repo)
+#    customer_service.save_customers()
+#    node_service.save_nodes()
+    bearer_service.save_bearers()
+    print (customer_repo.get_random("home"))
+    print (node_repo.get_random("4G"))
+    print (bearer_service.get_random())
 
 if __name__ == "__main__":
     main()

@@ -1,3 +1,4 @@
+from value_objects import QoS
 class Customer:
     def __init__(self, customer_type: str, msisdn: str, imsi: str, imei: str):
         """
@@ -72,3 +73,30 @@ class Node:
         """
         return {k: v for k, v in vars(self).items() if v not in [None, "", [], {}]}
 
+
+class Bearer:
+    def __init__(self, bearer_id: int, bearer_type: str, qos: QoS):
+        if not self._validate(bearer_id, bearer_type, qos):
+            raise ValueError(f"Invalid Bearer parameters: ID={bearer_id}, Type={bearer_type}, QoS={qos}")
+        
+        self.bearer_id = bearer_id
+        self.bearer_type = bearer_type
+        self.qos = qos
+
+    def _validate(self, bearer_id: int, bearer_type: str, qos: QoS) -> bool:
+        return isinstance(bearer_id, int) and bearer_id > 0 and isinstance(bearer_type, str) and bearer_type and isinstance(qos, QoS)
+
+    def __repr__(self):
+        return f"Bearer(ID={self.bearer_id}, Type={self.bearer_type}, QoS={self.qos})"
+
+    def to_dict(self):
+        return {
+            "Bearer_ID": self.bearer_id,
+            "Bearer_Type": self.bearer_type,
+            "QoS": self.qos.to_dict()  # Ensure the QoS is converted to a dict
+        }
+
+    def apply_qos(self, qos: QoS):
+        if not isinstance(qos, QoS):
+            raise ValueError(f"Invalid QoS object: {qos}")
+        self.qos = qos
