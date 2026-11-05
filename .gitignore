@@ -23,3 +23,9 @@ build/
 # OS Specific
 .DS_Store
 Thumbs.db
+
+# BMAD Output
+_bmad-output/
+_bmad/
+.opencode/
+.agents/
