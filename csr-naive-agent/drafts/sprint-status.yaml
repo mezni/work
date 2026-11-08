@@ -1,0 +1,141 @@
+# Sprint Status — csr-naive-agent (corrected, valid YAML)
+# Replaces the previous sprint-status.yaml, which was Markdown stored with a .yaml extension.
+# Generated from: PRD.md, ARCHITECTURE-SPINE.md, epics.md
+# Generated: 2026-11-08
+# Status: draft — do not mark "development ready" until open_corrections are resolved.
+
+metadata:
+  project: csr-naive-agent
+  generated_from:
+    - PRD.md
+    - ARCHITECTURE-SPINE.md
+    - epics.md
+  generated: 2026-11-08
+  status: draft
+  canonical_story_numbering: "Generated Stories section of epics.md (28 stories). The duplicate 'detail' section must be removed."
+  fr_count_note: "32 distinct FRs exist. FR-31 and FR-32 are undefined and intentionally excluded pending a decision."
+
+document_status:
+  PRD.md: draft
+  ARCHITECTURE-SPINE.md: draft
+  epics.md: needs-revision
+  EXPERIENCE.md: draft
+  DESIGN.md: draft
+
+open_corrections:
+  - id: FR-31-32-missing
+    severity: high
+    action: "Either define FR-31/FR-32 in PRD.md or renumber FR-33/FR-34 to FR-31/FR-32 across all docs."
+  - id: story-count-mismatch
+    severity: high
+    action: "Remove the '289 stories' line in epics.md; keep the 28 canonical stories."
+  - id: story-duplication
+    severity: high
+    action: "Delete the duplicate 'Epics and Stories Detail' section (or the 'Generated Stories' section), keeping one canonical set with stable IDs."
+  - id: fr09-fr16-fr25-mapping
+    severity: high
+    action: "Fix the AuthZ matrix: FR-09 mapped twice, FR-16 mislabeled 'Issue refunds', FR-25 duplicated across Epic 2 and Epic 4."
+  - id: product-inventory-model
+    severity: high
+    action: "Add Product and Inventory to the domain model and the FR list; order flows depend on them."
+  - id: carrier-integration-scope
+    severity: high
+    action: "Decide whether live carrier APIs are MVP or Phase 2; PRD currently says both."
+  - id: inter-epic-dependencies
+    severity: high
+    action: "Epics are not standalone; use the dependencies block below."
+  - id: wcag-ratios
+    severity: medium
+    action: "Correct WCAG AA ratios in DESIGN.md and EXPERIENCE.md (normal text 4.5:1, large text 3:1)."
+  - id: undefined-design-tokens
+    severity: medium
+    action: "Define referenced DESIGN.md tokens (primary 200/300/700/950; status 100/200/600) or remove references."
+
+epics:
+  - id: epic-1
+    name: Customer Management
+    stories: 5
+    frs: [FR-01, FR-02, FR-03, FR-04, FR-05, FR-21]
+    depends_on: []
+  - id: epic-2
+    name: Order Management
+    stories: 7
+    frs: [FR-06, FR-07, FR-08, FR-09, FR-10, FR-22, FR-25, FR-26]
+    depends_on: [epic-1]
+  - id: epic-3
+    name: Shipment Management
+    stories: 5
+    frs: [FR-11, FR-12, FR-13, FR-14, FR-15, FR-23]
+    depends_on: [epic-2]
+  - id: epic-4
+    name: Billing Management
+    stories: 6
+    frs: [FR-16, FR-17, FR-18, FR-19, FR-20, FR-24, FR-27]
+    depends_on: [epic-1, epic-2]
+  - id: epic-5
+    name: User Management
+    stories: 5
+    frs: [FR-28, FR-29, FR-30, FR-33, FR-34]
+    depends_on: []
+
+totals:
+  epics: 5
+  stories: 28
+  distinct_frs_covered: 32
+  frs_undefined: [FR-31, FR-32]
+
+story_status:
+  # Canonical IDs aligned to the Generated Stories section (Epic 2 has 7, Epic 3 has 5).
+  "1.1": backlog
+  "1.2": backlog
+  "1.3": backlog
+  "1.4": backlog
+  "1.5": backlog
+  "2.1": backlog
+  "2.2": backlog
+  "2.3": backlog
+  "2.4": backlog
+  "2.5": backlog
+  "2.6": backlog
+  "2.7": backlog
+  "3.1": backlog
+  "3.2": backlog
+  "3.3": backlog
+  "3.4": backlog
+  "3.5": backlog
+  "4.1": backlog
+  "4.2": backlog
+  "4.3": backlog
+  "4.4": backlog
+  "4.5": backlog
+  "4.6": backlog
+  "5.1": backlog
+  "5.2": backlog
+  "5.3": backlog
+  "5.4": backlog
+  "5.5": backlog
+
+risks:
+  - id: carrier-api-dependency
+    impact: high
+    note: "Real-time tracking (FR-13/FR-23) requires external carrier APIs, contradicting the 'no external dependencies' constraint."
+  - id: authz-incomplete
+    impact: high
+    note: "Most FRs have no scope/role mapping; routes cannot be enforced safely until the matrix is complete."
+  - id: missing-data-model
+    impact: high
+    note: "No ERD/schema; entities have no fields or relationships. Blocks repositories, migrations, and tests."
+  - id: inbox-notification-scope
+    impact: medium
+    note: "Return flow promises emailed labels, but notification system is deferred to Phase 3."
+  - id: streamlit-theming
+    impact: medium
+    note: "DESIGN.md assumes CSS variables and prefers-color-scheme dark mode that Streamlit cannot reliably honor."
+  - id: documents-draft
+    impact: medium
+    note: "Every source document is Draft; epics.md is wrongly marked final."
+
+next_action:
+  - "Resolve open_corrections (start with FR inventory + data model)."
+  - "Re-run sprint planning once epics.md passes a traceability check."
+  - "Only then estimate and begin Epic 1."
