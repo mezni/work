@@ -22,6 +22,7 @@ Existing solutions are either too heavy (enterprise ERP) or too fragmented (sepa
 - [ ] API response time < 200ms for 95% of requests
 - [ ] Zero data loss during schema migrations
 - [ ] Streamlit UI load time < 3 seconds
+- [ ] Synthetic demo data generation: 50-100 customers, 200-500 orders with full order history, shipments, and billing records ready for exhibition
 
 ## 5. Functional Requirements
 
@@ -74,8 +75,6 @@ Existing solutions are either too heavy (enterprise ERP) or too fragmented (sepa
 | FR-28 | Create, read, update, delete system users | High |
 | FR-29 | Assign roles: Viewer, Operator, Manager, Administrator | High |
 | FR-30 | Manage user permissions scoped by tool catalog | High |
-| FR-31 | Password policy enforcement (min 8 chars, mixed case, digits) | Medium |
-| FR-32 | Account lockout after 5 failed attempts, 30-minute lockout | Medium |
 | FR-33 | User status: active/inactive toggle | Low |
 | FR-34 | Search users by name/email | Medium |
 
@@ -95,6 +94,8 @@ Existing solutions are either too heavy (enterprise ERP) or too fragmented (sepa
 - Email uniqueness constraint
 - Payment method masking (never store full card numbers)
 - Input validation on all endpoints
+- Passwords are hashed using bcrypt/Argon2, never stored in plain text
+- Audit logging for `issue_refund` operations (per FR-27); user management operations (create_user, update_user, delete_user, FR-28/29/30/33) also audited for compliance and access control verification
 
 ### 6.4 Maintainability
 - 100% unit test coverage for domain entities
@@ -125,8 +126,10 @@ Creates Shipment → Processes Billing Records
 ### 8.1 Technical Constraints
 - Must use SQLite for initial development
 - Must be compatible with FastAPI and Streamlit
-- Domain layer cannot import FastAPI or Streamlit
+- Domain layer cannot import FastAPI, Streamlit, or tool catalog implementations
 - Must support Python 3.10+
+- Functional requirements (FR-21 to FR-34) define capabilities in the domain layer; implementations (tool catalog calls, database operations, API endpoints) reside in the application/adapter layer
+- `User Management` scope is orthogonal to `Read`/`Write`/`Financial Write` scopes; role assignments require `User Management` scope explicitly. Operator/Manager roles can perform user CRUD only under `User Management` scope, not via general `Write` scope
 
 ### 8.2 Business Constraints
 - Maximum 5 tier levels for customers
@@ -147,6 +150,7 @@ Creates Shipment → Processes Billing Records
 - Session management: tokens valid for 24 hours, refreshable via `/auth/refresh`
 - Password policy: minimum 8 characters, mix of upper/lowercase and digits
 - Account lockout: 5 failed attempts, 30-minute lockout period
+- Passwords are hashed using bcrypt/Argon2, never stored in plain text (security best practice)
 
 #### Authorization (authZ)
 - Permissions scoped by tool catalog authorization levels:
@@ -179,9 +183,7 @@ Creates Shipment → Processes Billing Records
 | FR-28 (Create, read, update, delete system users) | `User Management` | User Manager |
 | FR-29 (Assign roles: Viewer, Operator, Manager, Administrator) | `User Management` | User Manager |
 | FR-30 (Manage user permissions scoped by tool catalog) | `User Management` | User Manager |
-| FR-31 (Password policy enforcement) | `Read` | Viewer/Operator |
-| FR-32 (Account lockout after 5 failed attempts) | `Read` | Viewer/Operator |
-| FR-33 (User status: active/inactive toggle) | `Write` | Operator/Manager |
+| FR-33 (User status: active/inactive toggle) | `Write` | Administrator |
 | FR-34 (Search users by name/email) | `Read` | Viewer |
 
 ## 8. Open Questions / Assumptions
@@ -217,6 +219,7 @@ Creates Shipment → Processes Billing Records
 - Add caching layer (Redis)
 - Implement event sourcing for audit trails
 - Add GraphQL API alongside REST
+- Implement synthetic data generator for demo exhibitions (supports 50-100 customers, 200-500 orders with full lineage)
 
 ---
 *Document Version: 1.0*
