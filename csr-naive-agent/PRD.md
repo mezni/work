@@ -121,18 +121,60 @@ Creates Shipment → Processes Billing Records
 - No external service dependencies initially
 - Docker containerizable for deployment
 
-## 9. Open Questions / Assumptions
+## 9. Tool Integration
 
-### 9.1 Assumptions
+### Tool Catalog Summary
+
+| Tool Name | Authorization Level | Primary Function |
+|-----------|--------------------|------------------|
+| `get_customer_account` | Read | Retrieves non-sensitive profile details (name, email, preferences). Data filtering applied. |
+| `get_order_history` | Read | Fetches past orders, line items, and fulfillment statuses. Customer scope filtering. |
+| `get_delivery_status` | Read | Tracks real-time package locations, carriers, and estimated delivery dates. Data filtering. |
+| `get_billing_history` | Read (Sensitive-data filtering) | Retrieves payment transactions with masked account/card details (PCI-DSS compliant). |
+| `check_refund_eligibility` | Read | Evaluates return windows and policy logic to determine if an item is eligible for refund. Deterministic policy. |
+| `create_return_request` | Write (Idempotency) | Initiates an item return and generates shipping labels; prevents duplicate submissions via idempotency keys. |
+| `issue_refund` | Financial Write (Elevated permission) | Executes monetary credit to customer balance/payment method; requires explicit auth and full audit logging. |
+
+### Authorization & Policy Mapping
+
+| Functional Requirement | Corresponding Tool(s) | Policy Notes |
+|------------------------|----------------------|-------------|
+| FR-01: CRUD customers | `get_customer_account` | Read-only access to non-sensitive fields |
+| FR-04: View billing history | `get_billing_history` | PCI-DSS masked data only |
+| FR-09: Mark return eligibility | `check_refund_eligibility` | Deterministic policy evaluation |
+| FR-09: Create return request | `create_return_request` | Idempotency key required; prevents duplicates |
+| FR-16: Issue refunds | `issue_refund` | Elevated permission; full audit logging |
+| FR-13: Track shipments | `get_delivery_status` | Real-time tracking with carrier data |
+
+### Integration Architecture
+
+The application implements these tools as API endpoints under `/api/v1/tools/` with the following mapping:
+
+- **GET /tools/customer-account** → `get_customer_account`
+- **GET /tools/order-history** → `get_order_history`
+- **GET /tools/delivery-status** → `get_delivery_status`
+- **GET /tools/billing-history** → `get_billing_history`
+- **POST /tools/check-refund** → `check_refund_eligibility`
+- **POST /tools/create-return** → `create_return_request`
+- **POST /tools/issue-refund** → `issue_refund`
+
+Authorization is enforced at the FastAPI route level using dependency injection and scope checks matching the catalog authorization levels.
+
+---
+
+## 8. Open Questions / Assumptions
+
+### 8.1 Assumptions
 - Single-tenant deployment (one database per organization)
 - No concurrent order modification conflicts expected
 - Customer tiers are predefined (Standard, Gold, Enterprise)
+- Tool catalog authorization will be enforced via FastAPI dependencies
 
-### 9.2 Open Questions
-- Should the app include authentication/authorization?
-- Need API rate limiting configuration?
-- Email validation strictness level?
-- Shipping cost calculation method?
+### 8.2 Open Questions
+- Should tool endpoints include rate limiting?
+- Email validation strictness level for `get_customer_account`?
+- Shipping cost calculation method integration with `get_delivery_status`?
+- Audit log storage strategy for `issue_refund` operations?
 
 ## 10. Future Considerations
 
