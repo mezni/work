@@ -68,6 +68,17 @@ Existing solutions are either too heavy (enterprise ERP) or too fragmented (sepa
 | FR-24 | Retrieves payment transactions with masked account/card details (PCI-DSS compliant) | Medium |
 | FR-27 | Executes monetary credit to customer balance/payment method; requires explicit auth and full audit logging | High |
 
+### 5.5 User Management (System Context)
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| FR-28 | Create, read, update, delete system users | High |
+| FR-29 | Assign roles: Viewer, Operator, Manager, Administrator | High |
+| FR-30 | Manage user permissions scoped by tool catalog | High |
+| FR-31 | Password policy enforcement (min 8 chars, mixed case, digits) | Medium |
+| FR-32 | Account lockout after 5 failed attempts, 30-minute lockout | Medium |
+| FR-33 | User status: active/inactive toggle | Low |
+| FR-34 | Search users by name/email | Medium |
+
 ## 6. Non-Functional Requirements
 
 ### 6.1 Performance
@@ -142,11 +153,13 @@ Creates Shipment → Processes Billing Records
   - `Read` scope: access to `get_customer_account`, `get_order_history`, `get_delivery_status`, `get_billing_history`, `check_refund_eligibility`
   - `Write` scope: access to `create_return_request`
   - `Financial Write` scope: access to `issue_refund` (requires elevated permissions and audit logging)
+  - `User Management` scope: access to `create_user`, `update_user`, `delete_user`, `assign_role`
 - Role-based access control (RBAC):
   - **Viewer**: Read-only access to customer/order/summary data
   - **Operator**: Can create orders, add items, create shipments, generate billing records
   - **Manager**: Full CRUD access plus ability to issue refunds and authorize returns
   - **Administrator**: All permissions plus user management and system configuration
+  - **User Manager**: Manage system users, roles, and permissions
 - Scope enforcement at FastAPI route level using `Depends(get_current_user_with_scope)`
 - All API requests must include valid authentication; unauthenticated requests receive `401 Unauthorized`
 - Authorization failures receive `403 Forbidden` with specific error reason
@@ -163,6 +176,13 @@ Creates Shipment → Processes Billing Records
 | FR-16 (Issue refunds) | `Financial Write` | Manager/Administrator |
 | FR-13 (Track shipments) | `Read` | Viewer |
 | FR-11 (Create shipments) | `Write` | Operator |
+| FR-28 (Create, read, update, delete system users) | `User Management` | User Manager |
+| FR-29 (Assign roles: Viewer, Operator, Manager, Administrator) | `User Management` | User Manager |
+| FR-30 (Manage user permissions scoped by tool catalog) | `User Management` | User Manager |
+| FR-31 (Password policy enforcement) | `Read` | Viewer/Operator |
+| FR-32 (Account lockout after 5 failed attempts) | `Read` | Viewer/Operator |
+| FR-33 (User status: active/inactive toggle) | `Write` | Operator/Manager |
+| FR-34 (Search users by name/email) | `Read` | Viewer |
 
 ## 8. Open Questions / Assumptions
 
