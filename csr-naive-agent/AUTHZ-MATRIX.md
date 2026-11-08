@@ -59,10 +59,10 @@
 | FR-28 | CRUD system users | Write | `User Management` | User Manager | Administrator also allowed |
 | FR-29 | Assign roles | Write | `User Management` | User Manager | Role set must include `User Manager` |
 | FR-30 | Manage permissions by tool catalog | Write | `User Management` | User Manager | |
-| FR-33 | Toggle user active/inactive | Write | `User Management` | Administrator | **Decision**: use `User Management`, not generic `Write` (resolves PRD conflict) |
-| FR-34 | Search users | Read | `User Management` | User Manager | **Decision**: user directory is sensitive; do not expose under plain `Read` |
+| FR-31 | Toggle user active/inactive | Write | `User Management` | Administrator | **Decision**: use `User Management`, not generic `Write` (resolves PRD conflict) |
+| FR-32 | Search users | Read | `User Management` | User Manager | **Decision**: user directory is sensitive; do not expose under plain `Read` |
 
-> FR-31 and FR-32 are undefined in the current PRD and are therefore not mapped. Resolve before implementation.
+> FR IDs are now contiguous (FR-01 through FR-32). FR-33/FR-34 were renumbered to FR-31/FR-32 to close the gap; all references were updated.
 
 ## 4. Resolved Decisions
 
@@ -70,8 +70,8 @@
 2. **FR-16 is billing-record creation, not refunds.** It requires `Financial Write` (Manager). Issue-refund remains FR-27.
 3. **FR-09's second row was actually FR-26.** The "create return request" mapping belongs to FR-26.
 4. **FR-25 lives only in Epic 2.** Remove the duplicate Story 4.6 from Epic 4.
-5. **FR-33 uses `User Management`.** Generic `Write` is insufficient for user lifecycle changes.
-6. **FR-34 uses `User Management`.** User search is an administrative capability, not a general read.
+5. **FR-31 uses `User Management`.** Generic `Write` is insufficient for user lifecycle changes.
+6. **FR-32 uses `User Management`.** User search is an administrative capability, not a general read.
 
 ## 5. HTTP Semantics
 

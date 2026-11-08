@@ -15,6 +15,8 @@
 ---
 ## User Personas
 
+> The CSR is the primary operator. Customer-facing flows (browsing, tracking, viewing billing) may be self-service or assisted by a CSR; Journey 2 shows the customer-facing view of the same order lifecycle.
+
 ### Persona 1: Customer Service Representative (CSR)
 
 **Description**: Front-line staff who manage customer accounts, process orders, handle returns, and track shipments.
@@ -83,9 +85,9 @@
 **Goals**:
 - Create and manage user accounts with appropriate permissions
 - Assign roles (Viewer, Operator, Manager, Administrator, User Manager)
-- Monitor system health and usage
-- Configure system settings and preferences
 - Audit user actions for compliance
+- Monitor system health and usage *(post-MVP; no FR yet)*
+- Configure system settings and preferences *(post-MVP; no FR yet)*
 
 **Pain Points**:
 - Complex role assignment without clear guidance
@@ -148,10 +150,10 @@
 
 **Step 2**: Select products and quantities
 - **Interface**: Product catalog with search, filters, category navigation
-- **Fields**: Product ID/name, quantity (1-5), price display
+- **Fields**: Product ID/name, quantity (≥ 1), price display
 - **Validation**:
   - Product must exist in catalog
-  - Quantity must be 1-5
+  - Quantity must be ≥ 1 (per-line cap configurable if enabled)
   - Price must be positive
 - **Action**: Select items, click "Add to Order"
 
@@ -186,7 +188,7 @@
 - **Interface**: Return eligibility checker
 - **Fields**: Item ID, purchase date, current date
 - **Validation**: 
-  - Purchase date within return window (typically 30 days)
+  - Purchase date within return window (30 days, configurable policy)
   - Item status: not used, in original packaging
   - Order status: not already cancelled/returned
 - **Action**: Click "Check Eligibility"
@@ -201,8 +203,8 @@
 - **Action**: Click "Submit Return Request"
 
 **Step 5**: Return confirmation
-- **Success**: Show "Return request submitted. RMA-001 generated. Shipping label will be emailed."
-- **Generate**: Shipping label PDF, email to customer
+- **Success**: Show "Return request submitted. RMA-001 generated. Shipping label is ready."
+- **Generate**: Shipping label (available for download/print); email delivery activates once the notification service is enabled (deferred)
 - **Error**: Show error, prevent submission, keep form open
 
 **Step 6**: Return status tracking
@@ -222,14 +224,14 @@
   - Enter tracking number manually
   - Select from recent shipments for this order
   - Auto-detect from carrier
-- **Fields**: Tracking number, carrier selection (FedEx, UPS, DHL, USPS)
+- **Fields**: Tracking number, carrier selection (FedEx, UPS, DHL)
 
 **Step 3**: Retrieve tracking data
 - **Action**: System fetches real-time status from carrier API
 - **Loading**: Show spinner, "Fetching tracking information..."
 - **Result**: Display tracking details or error message
 
-**Step 5**: Display tracking information
+**Step 4**: Display tracking information
 - **Status indicators**: In Transit, Out for Delivery, Delivered
 - **Location**: Current city/state, last update timestamp
 - **Estimated delivery**: Date with +/- business days
@@ -402,10 +404,10 @@
 
 | Contrast Level | Minimum Ratio | Target Elements |
 |----------------|---------------|-----------------|
-| **AA large text** | 4.5:1 | Body text > 18pt, heading text > 14pt bold |
-| **AA normal text** | 3:1 | Body text < 18pt, non-text content |
+| **AA normal text** | 4.5:1 | Body text < 18pt, non-text content |
+| **AA large text** | 3:1 | Body text ≥ 18pt, heading text ≥ 14pt bold |
 | **UI components** | 3:1 | Borders, inputs, icons, disabled states |
-| **Error states** | 3:1 | Danger colors against neutral backgrounds |
+| **Error text** | 4.5:1 | Danger text against neutral backgrounds |
 | **Graphical content** | 3:1 | Charts, icons, decorative elements |
 
 **Tools for Verification**:
@@ -596,17 +598,17 @@ Every action should be traceable. Audit logs, status indicators, and clear error
 ### 8. Performance Matters
 Page load < 3 seconds, API responses < 200ms (p95), smooth interactions at 60fps. Performance is a feature, not an afterthought.
 
-### 8. Mobile-First, Responsive
+### 9. Mobile-First, Responsive
 Design works on mobile devices first, then scales up to desktop. Touch targets minimum 44px, responsive breakpoints at 48rem (768px).
 
-### 8. Speed of Implementation
+### 10. Speed of Implementation
 Design tokens and components are implementation-ready for the FastAPI/Streamlit stack. No speculative design that can't be built in the sprint.
 
 ---
 ## Design-to-Development Handoff Checklist
 
 ### Visual Design
-- [ ] COLOR: All color tokens defined, contrast verified, dark mode supported
+- **COLOR**: All color tokens defined, contrast verified, dark mode supported
 - **FILE**: DESIGN.md reviewed and approved
 - **TOKENS**: CSS custom properties extracted and committed
 
@@ -647,7 +649,7 @@ Design tokens and components are implementation-ready for the FastAPI/Streamlit 
 | Date | Author | Change | Status |
 |------|--------|--------|--------|
 | 2026-11-08 | Sally (UX Designer) | Initial design draft | Draft |
-| — | — | — | — |
+| 2026-11-08 | Review pass | Fixed WCAG AA ratios, principle numbering, Flow 4 step numbering, carrier list (USPS removed), quantity rule, return-window/notification wording, persona scope | Draft |
 
 ---
 *Document Version: 1.0*

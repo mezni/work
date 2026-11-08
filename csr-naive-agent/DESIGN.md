@@ -28,19 +28,35 @@
 |-------|-----|-------|
 | `color.primary.50` | `#f8f9fa` | Light backgrounds, subtle surfaces |
 | `color.primary.100` | `#f1f3f5` | Default page backgrounds |
+| `color.primary.200` | `#e9ecef` | Secondary button hover, subtle fills |
+| `color.primary.300` | `#dee2e6` | Input borders, dividers, disabled fills |
 | `color.primary.500` | `#212b36` | Primary text color, main content |
-| `color.primary.600` | `#1a232e` | Disabled text, secondary text |
+| `color.primary.600` | `#1a232e` | Disabled text, secondary text, focus ring |
+| `color.primary.700` | `#131a22` | Hover state for primary actions |
 | `color.primary.800` | `#0d1115` | High-contrast text on light surfaces |
 | `color.primary.900` | `#050505` | Maximum contrast, error states |
+| `color.primary.950` | `#020203` | Modal scrim base |
 
 ### Secondary Palette (Action & Status)
 
 | Token | Hex | Usage |
 |-------|-----|-------|
+| `color.success.100` | `#d4edda` | Success button text, success tint |
+| `color.success.200` | `#b1dfbb` | Success disabled |
 | `color.success.500` | `#28a745` | Success messages, confirmed actions |
+| `color.success.600` | `#1e7e34` | Success hover |
+| `color.warning.100` | `#fff3cd` | Warning tint |
+| `color.warning.200` | `#ffe8a1` | Warning disabled |
 | `color.warning.500` | `#ffc107` | Warnings, validation errors, attention calls |
+| `color.warning.600` | `#d39e00` | Warning hover |
+| `color.danger.100` | `#f8d7da` | Danger button text, danger tint |
+| `color.danger.200` | `#f1aeb5` | Danger disabled |
 | `color.danger.500` | `#dc3545` | Critical errors, destructive actions |
+| `color.danger.600` | `#bd2130` | Danger hover |
+| `color.info.100` | `#d1ecf1` | Info tint |
+| `color.info.200` | `#bee5eb` | Info disabled |
 | `color.info.500` | `#17a2b8` | Informational messages, hints |
+| `color.info.600` | `#117a8b` | Info hover |
 
 ### Semantic Color Roles
 
@@ -51,7 +67,8 @@
 | `color.text.inverse` | White on dark | `color.primary.900` inverted |
 | `color.background.page` | Page canvas | `color.primary.100` |
 | `color.background.card` | Card/surface backgrounds | `color.primary.50` |
-| `color.background.modal` | Modal overlays | `color.primary.950` with 90% opacity |
+| `color.background.scrim` | Modal scrim behind the dialog | `color.primary.950` at 90% opacity |
+| `color.background.modal` | Modal dialog surface | `color.background.card` |
 | `color.border.input` | Input field borders | `color.primary.300` |
 | `color.border.focus` | Focus ring state | `color.primary.600` |
 
@@ -59,10 +76,10 @@
 
 | Contrast Level | Minimum Ratio | Applicable Tokens |
 |----------------|---------------|-------------------|
-| AA large text | 4.5:1 | `color.text.primary` vs `color.background.page` |
-| AA normal text | 3:1 | `color.text.secondary` vs `color.background.page` |
+| AA normal text | 4.5:1 | `color.text.primary` / `color.text.secondary` vs `color.background.page` |
+| AA large text | 3:1 | Headings and text ≥ 18pt (or 14pt bold) vs backgrounds |
 | UI components | 3:1 | Borders, icons, inactive states |
-| Error states | 3:1 | `color.danger.*` against neutral backgrounds |
+| Error text | 4.5:1 | `color.danger.500` text against neutral backgrounds |
 
 ---
 ## Typography
@@ -132,7 +149,7 @@
 | **link** | `transparent` | `color.primary.600` | none | `color.primary.700` | `color.primary.300` |
 
 **Button Styles**:
-- Height: `3rem` (64px with border)
+- Height: `3rem` (48px)
 - Border radius: `0.375rem` (6px)
 - Font size: `1rem` (16px)
 - Font weight: `500` (semi-bold)
@@ -163,7 +180,7 @@
 | Background | `color.background.card` |
 | Border | 1px `color.border.input` (default), `color.border.focus` (focused) |
 | Border radius | `0.5rem` (8px) |
-| Padding | `spacing.base` vertical, `spacing.sm` horizontal |
+| Padding | `spacing.base` vertical, `spacing.base` horizontal |
 | Box shadow | `0 1px 2px 0 rgba(0, 0, 0, 0.05)` |
 | Max width | `100%` |
 
@@ -171,7 +188,7 @@
 
 | Property | Value |
 |----------|-------|
-| Font size | `typography.text.sm` (12px) for dense tables, `typography.text.base` (16px) for readability |
+| Font size | `typography.text.sm` (14px) for dense tables, `typography.text.base` (16px) for readability |
 | Row height | `typography.line.base` + `spacing.xs` |
 | Header background | `color.primary.50` |
 | Header text color | `color.text.secondary` |
@@ -183,7 +200,7 @@
 
 | Property | Value |
 |----------|-------|
-| Background | `color.background.modal` with 90% opacity over dimmed page |
+| Background | `color.background.card` over `color.background.scrim` (90% opacity) |
 | Modal width | `min(90%, 48rem)` (max 768px) |
 | Border radius | `0.5rem` (8px) |
 | Header padding | `spacing.lg` |
@@ -218,7 +235,7 @@
 | **Billing** | `payment`, `refund`, `credit`, `invoice`, `receipt` | Billing context UI |
 
 **Icon Style**:
-- System icons (SVG or Font Awesome)
+- Inline SVG icon set (Lucide-style); no icon-font dependency
 - 20px x 20px viewBox
 - CurrentColor for color inheritance
 - 24px size for most contexts, 16px for inline with text
@@ -234,16 +251,16 @@
 | **Components** | Buttons 5 variants, Forms 6 elements, Cards 1 spec, Tables 1 spec, Modals 1 spec, Toasts 1 spec | 19+ |
 | **Iconography** | Action 10, Status 5, Navigation 6, Shipment 6, Customer 5, Order 5, Billing 5 | 42+ |
 
-**Total design tokens**: ~122+ named tokens across all categories
+**Total design tokens**: ~112+ named tokens across all categories (sum of the minimums above)
 
 ---
 ## Implementation Notes
 
-- All tokens are defined as CSS custom properties (CSS variables) for easy theming
-- FastAPI/Streamlit integration: use `st.dataframe` with `use_container_width=True`, custom CSS via `st.markdown(`"/* CSS variables */")"`
-- Streamlit theming: leverage `st.set_page_config` with custom menu parameters
-- Accessibility: all color ratios meet WCAG AA for normal text and UI components
-- Dark mode: supported via CSS prefers-color-scheme media query, swap color palette tokens
+- All tokens are defined as CSS custom properties (CSS variables) for use by custom HTML/CSS components
+- FastAPI/Streamlit integration: use `st.dataframe` with `use_container_width=True`; inject limited custom CSS via `st.markdown(..., unsafe_allow_html=True)`
+- Streamlit theming: set the theme via `.streamlit/config.toml` (`[theme]`) and `st.set_page_config`; core Streamlit widgets cannot consume arbitrary CSS variables
+- Accessibility: all color ratios meet WCAG AA for normal text (4.5:1) and UI components (3:1)
+- Dark mode: on Streamlit use the `[theme]` config (light/dark) — `prefers-color-scheme` applies only to custom HTML components, not native Streamlit widgets
 - Responsive: mobile-first breakpoint at `48rem` (768px), stack columns, reduce padding
 
 ---

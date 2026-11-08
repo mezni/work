@@ -13,9 +13,14 @@ The system needs a lightweight yet robust system to manage:
 Existing solutions are either too heavy (enterprise ERP) or too fragmented (separate scripts). Need a unified, modular application.
 
 ## 3. Target Users
-- Project managers
-- Development teams building infrastructure
-- Operations teams managing deployments and monitoring
+
+**Primary users**
+- Customer Service Representative (CSR) — front-line staff managing accounts, orders, returns, shipments, and billing
+- Customer (end user) — places and tracks orders, assisted by a CSR or via limited self-service
+- System Administrator — manages users, roles, and the audit trail
+
+**Stakeholders**
+- Project managers, development teams, and operations teams building and running the system
 
 ## 4. Success Metrics
 - [ ] 100% of CRUD operations covered by unit tests
@@ -73,10 +78,10 @@ Existing solutions are either too heavy (enterprise ERP) or too fragmented (sepa
 | ID | Requirement | Priority |
 |----|-------------|----------|
 | FR-28 | Create, read, update, delete system users | High |
-| FR-29 | Assign roles: Viewer, Operator, Manager, Administrator | High |
+| FR-29 | Assign roles: Viewer, Operator, Manager, Administrator, User Manager | High |
 | FR-30 | Manage user permissions scoped by tool catalog | High |
-| FR-33 | User status: active/inactive toggle | Low |
-| FR-34 | Search users by name/email | Medium |
+| FR-31 | User status: active/inactive toggle | Low |
+| FR-32 | Search users by name/email | Medium |
 
 ## 6. Non-Functional Requirements
 
@@ -128,18 +133,18 @@ Creates Shipment → Processes Billing Records
 - Must be compatible with FastAPI and Streamlit
 - Domain layer cannot import FastAPI, Streamlit, or tool catalog implementations
 - Must support Python 3.10+
-- Functional requirements (FR-21 to FR-34) define capabilities in the domain layer; implementations (tool catalog calls, database operations, API endpoints) reside in the application/adapter layer
+- Functional requirements (FR-21 to FR-32) define capabilities in the domain layer; implementations (tool catalog calls, database operations, API endpoints) reside in the application/adapter layer
 - `User Management` scope is orthogonal to `Read`/`Write`/`Financial Write` scopes; role assignments require `User Management` scope explicitly. Operator/Manager roles can perform user CRUD only under `User Management` scope, not via general `Write` scope
 
 ### 8.2 Business Constraints
-- Maximum 5 tier levels for customers
+- Customer tier must be one of: Standard, Gold, Enterprise
 - Order items must have unit price > 0
 - Tracking numbers must be unique per shipment
 - Billing transactions require amount > 0
 
 ### 8.3 Infrastructure Constraints
 - Single database file for simplicity (SQLite)
-- No external service dependencies initially
+- Carrier integrations (FedEx, UPS, DHL) sit behind a port; the MVP may use a mock/sandbox adapter until live credentials are provisioned
 - Docker containerizable for deployment
 
 ### 8.4 Authentication & Authorization
@@ -170,41 +175,43 @@ Creates Shipment → Processes Billing Records
 
 #### AuthN/AuthZ Mapping to Functional Requirements
 
-| FR | Required Scopes | Role Minimum |
-|----|-----------------|--------------|
-| FR-01 (CRUD customers) | `Read` | Viewer |
-| FR-07 (Add order items) | `Write` | Operator |
-| FR-08 (Update order status) | `Write` | Operator |
-| FR-09 (Mark return eligibility) | `Read` | Viewer/Operator |
-| FR-09 (Create return request) | `Write` | Operator |
-| FR-16 (Issue refunds) | `Financial Write` | Manager/Administrator |
-| FR-13 (Track shipments) | `Read` | Viewer |
-| FR-11 (Create shipments) | `Write` | Operator |
-| FR-28 (Create, read, update, delete system users) | `User Management` | User Manager |
-| FR-29 (Assign roles: Viewer, Operator, Manager, Administrator) | `User Management` | User Manager |
-| FR-30 (Manage user permissions scoped by tool catalog) | `User Management` | User Manager |
-| FR-33 (User status: active/inactive toggle) | `Write` | Administrator |
-| FR-34 (Search users by name/email) | `Read` | Viewer |
+The canonical, complete FR → scope → minimum-role matrix is maintained in **`AUTHZ-MATRIX.md`**. Corrections applied to earlier drafts:
 
-## 8. Open Questions / Assumptions
+- FR-01 (customer CRUD) requires `Read` for reads and `Write` for create/update/delete — not `Read` only.
+- FR-09 (mark return eligibility) is a mutation and requires `Write`.
+- FR-16 is billing-record creation (`Financial Write`); issuing refunds is FR-27.
+- FR-25 (return eligibility) is owned by Epic 2 and is not duplicated elsewhere.
+- FR-31 (user status toggle) and FR-32 (search users) require `User Management`.
 
-### 8.1 Assumptions
+Role → granted-scope summary:
+
+| Role | Granted scopes |
+|------|----------------|
+| Viewer | `Read` |
+| Operator | `Read`, `Write` |
+| Manager | `Read`, `Write`, `Financial Write` |
+| Administrator | `Read`, `Write`, `Financial Write`, `User Management` |
+| User Manager | `Read`, `User Management` |
+
+## 9. Assumptions & Decisions
+
+### 9.1 Assumptions
 - Single-tenant deployment (one database per organization)
 - No concurrent order modification conflicts expected
 - Customer tiers are predefined (Standard, Gold, Enterprise)
 - Tool catalog authorization will be enforced via FastAPI dependencies
 
-### 8.2 Open Questions
-- Should tool endpoints include rate limiting: **NO**
-- Email validation strictness level for `get_customer_account`: **NO**
-- Shipping cost calculation method integration with `get_delivery_status`: **NO**
-- Audit log storage strategy for `issue_refund` operations: **NO**
+### 9.2 Decisions (resolved)
+- Tool endpoints include rate limiting: **No**
+- Email validation strictness for `get_customer_account`: **Not enforced beyond format**
+- Shipping cost calculation integrated with `get_delivery_status`: **No**
+- Audit log storage strategy for `issue_refund`: **SQLite audit table (append-only), see DATA-MODEL.md**
 
 ## 10. Future Considerations
 
 ### 10.1 Phase 2 Features
 - Webhook notifications for shipment status changes
-- Integration with external carrier APIs (FedEx, UPS, DHL)
+- Live carrier API credentials/integration (FedEx, UPS, DHL); MVP uses a port-backed mock/sandbox adapter
 - Advanced reporting and analytics dashboard
 - Multi-tenant support
 
@@ -219,7 +226,7 @@ Creates Shipment → Processes Billing Records
 - Add caching layer (Redis)
 - Implement event sourcing for audit trails
 - Add GraphQL API alongside REST
-- Implement synthetic data generator for demo exhibitions (supports 50-100 customers, 200-500 orders with full lineage)
+- Implement synthetic data generator for demo exhibitions (supports 50-100 customers, 200-500 orders with full lineage) — **part of MVP** (see Success Metrics); this line tracks future expansion, not initial delivery
 
 ---
 *Document Version: 1.0*

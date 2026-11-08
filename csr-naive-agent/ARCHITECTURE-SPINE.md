@@ -8,9 +8,9 @@
 **status:** draft  
 **created:** 2026-11-08  
 **updated:** 2026-11-08  
-**binds:** [FR-01 through FR-34, all NFRs in sections 6.1-6.5]  
+**binds:** [FR-01 through FR-32, all NFRs in sections 6.1-6.5]  
 **sources:** [PRD.md v1.0]  
-**companions:** []  
+**companions:** [DATA-MODEL.md, AUTHZ-MATRIX.md]  
 
 ---
 <!-- TEMPLATE GUIDE — act on these comments, then delete them; never emit a comment in the finished spine. This is a shape, not a script: keep only the sections this spine needs and cut the rest (no empty headers). A small intent may be just paradigm + a few ADs + conventions; a platform earns more. An inherited epic spine is usually mostly Inherited Invariants + a thin Deferred. Decisions, not rationale (rationale lives in the memlog). Carry shape in diagrams; prose only where it must. -->
@@ -50,13 +50,13 @@
 
 ### AD-1 — Hexagonal architecture with domain layer isolation
 
-- **Binds:** FR-01 through FR-34; all NFRs in sections 6.1–6.5; domain entities and use cases
+- **Binds:** FR-01 through FR-32; all NFRs in sections 6.1–6.5; domain entities and use cases
 - **Prevents:** domain layer importing FastAPI, Streamlit, or tool catalog implementations; direct database coupling in domain models; framework-coupled business rules
-- **Rule:** The domain layer (csr_naive_agent/domain/) must not import FastAPI, Streamlit, or any tool catalog SDK. All external interactions go through ports defined in `domain/ports/` and implemented in `application/adapters/`. The repository pattern (interface in domain, implementation in infrastructure) enables ORM switching.
+- **Rule:** The domain layer (csr_naive_agent/domain/) must not import FastAPI, Streamlit, or any tool catalog SDK. All external interactions go through ports defined in `domain/ports/` and implemented in `infrastructure/` (repositories, carrier/billing adapters, auth). The repository pattern (interface in domain, implementation in infrastructure) enables ORM switching.
 
 ### AD-2 — Scope-based authorization with explicit RBAC
 
-- **Binds:** AuthN/AuthZ Mapping table (FR-01 to FR-34 → required scopes → role minimum); `Read`/`Write`/`Financial Write`/`User Management` scopes; RBAC roles (Viewer, Operator, Manager, Administrator, User Manager)
+- **Binds:** AuthN/AuthZ Mapping table (FR-01 to FR-32 → required scopes → role minimum); `Read`/`Write`/`Financial Write`/`User Management` scopes; RBAC roles (Viewer, Operator, Manager, Administrator, User Manager). Canonical matrix: `AUTHZ-MATRIX.md`.
 - **Prevents:** role ambiguity (e.g., Operator performing user management without `User Management` scope); missing scope checks at route level; implicit permission escalation
 - **Rule:** Every FastAPI route must depend on `get_current_user_with_scope` checking the exact required scope per the AuthN/AuthZ Mapping table. The `User Management` scope is orthogonal to `Read`/`Write`/`Financial Write`; user CRUD operations require explicit `User Management` scope, not general `Write` scope.
 
@@ -74,9 +74,9 @@
 
 ### AD-5 — Audit logging scope
 
-- **Binds:** FR-27 (issue_refund operations); user management operations (create_user, update_user, delete_user, FR-28/29/30/33); NFR 6.3 Security audit logging clause
+- **Binds:** FR-27 (issue_refund operations); user management operations (create_user, update_user, delete_user, FR-28/29/30/31); NFR 6.3 Security audit logging clause
 - **Prevents:** unaudited monetary transactions; unlogged user lifecycle events; audit log gaps for compliance
-- **Rule:** Every `issue_refund` request must produce an audit log entry with: timestamp, user ID, refund amount, order ID, reason. User management CRUD operations (FR-28/29/30/33) must also produce audit entries. Audit logs stored in a compliant storage (initial: SQLite; future: dedicated audit store). Log entries include user identity, operation type, timestamp, and outcome (success/failure).
+- **Rule:** Every `issue_refund` request must produce an audit log entry with: timestamp, user ID, refund amount, order ID, reason. User management CRUD operations (FR-28/29/30/31) must also produce audit entries. Audit logs stored in a compliant storage (initial: SQLite; future: dedicated audit store). Log entries include user identity, operation type, timestamp, and outcome (success/failure). See `DATA-MODEL.md` → AuditLog.
 
 ### AD-6 — Password hashing requirement
 
@@ -103,6 +103,11 @@
 | SQLite | 3.40+ (development only) |
 | PostgreSQL | 13+ (production migration target) |
 | bcrypt | 4.0+ (password hashing) |
+| argon2-cffi | 23.1+ (alternative password hashing per AD-6) |
+| PyJWT | 2.8+ (JWT issuance/validation for Bearer auth) |
+| Alembic | 1.13+ (schema migrations, SQLite → PostgreSQL) |
+| pytest | 8.0+ (test runner) |
+| Faker | 24+ (synthetic data generator) |
 | Pydantic | 2.5+ (data validation) |
 | Mermaid | for diagrams (documentation) |
 
@@ -112,7 +117,7 @@
 csr-naive-agent/
   domain/                  # Core business rules; NO FastAPI/Streamlit/tool catalog imports
     __init__.py
-    entities.py            # Customer, Order, Shipment, Billing, User domain models
+    entities.py            # Customer, Product, Inventory, Order, OrderItem, Shipment, BillingRecord, ReturnRequest, User, AuditLog
     ports/                 # Interface contracts (repositories, use case ports)
     services/              # Use case services (orchestrate FRs)
   application/             # Wire things together; orchestrate use cases
@@ -143,6 +148,8 @@ csr-naive-agent/
     infrastructure/      # Repository adapter tests
   .memlog.md             # Architecture decisions memlog (append-only)
   ARCHITECTURE-SPINE.md  # This file — the architecture spine
+  DATA-MODEL.md          # Entities, fields, relationships, constraints
+  AUTHZ-MATRIX.md        # Canonical FR → scope → minimum-role matrix
   PRD.md                 # Product requirements (supersets the spine)
 ```
 
@@ -159,7 +166,7 @@ csr-naive-agent/
 | FR-25 (Check refund eligibility) | domain/services + api/routes | AD-1, AD-2 |
 | FR-26 (Create return request) | domain/services + api/routes + infrastructure (idempotency) | AD-1, AD-5 |
 | FR-27 (Issue refund) | domain/services + api/routes + audit logging | AD-1, AD-5 |
-| FR-28-34 (User management) | domain/entities + application/use_cases + api/routes + infrastructure/auth | AD-1, AD-2, AD-5, AD-6 |
+| FR-28-32 (User management) | domain/entities + application/use_cases + api/routes + infrastructure/auth | AD-1, AD-2, AD-5, AD-6 |
 | NFR 6.1 (Performance) | throughout (see NFR guidelines) | — |
 | NFR 6.2 (Reliability) | throughout (SQLite ACID, graceful degradation) | — |
 | NFR 6.3 (Security) | authN/authZ layer, data handling, logging | AD-4, AD-5, AD-6 |
@@ -173,6 +180,7 @@ csr-naive-agent/
 - **GraphQL API alongside REST** — deferred to Phase 3; not needed for MVP
 - **Multi-tenant support** — deferred to Phase 2; initial scope is single-tenant (one DB per organization as per assumptions)
 - **Webhook notifications for shipment status changes** — deferred to Phase 2; carrier API webhook integration
+- **Live carrier API credentials** — deferred to Phase 2; the MVP ships a port-backed mock/sandbox carrier adapter
 - **Advanced reporting and analytics dashboard** — deferred to Phase 3; initial focus is CRUD + tracking + billing
 - **Integration with external version control systems** — deferred; out of initial scope
 - **Notification system (email/SMS)** — deferred to Phase 3; initial focus on core functionality
