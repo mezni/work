@@ -1,10 +1,10 @@
-# Product Requirements Document: AI Agents Projects Support Application
+# Product Requirements Document: Support Application
 
 ## 1. Vision
-Build a supporting application for AI agents projects that manages customer relationships, orders, shipments, and billing records with a clean DDD and Clean Code architecture, enabling scalable development and easy maintenance.
+Build a supporting application that manages customer relationships, orders, shipments, and billing records with a clean DDD and Clean Code architecture, enabling scalable development and easy maintenance.
 
 ## 2. Problem Statement
-AI agents projects need a lightweight yet robust system to manage:
+The system needs a lightweight yet robust system to manage:
 - Customer information and tier segmentation
 - Order processing and item tracking
 - Shipment tracking with carrier integration
@@ -13,8 +13,8 @@ AI agents projects need a lightweight yet robust system to manage:
 Existing solutions are either too heavy (enterprise ERP) or too fragmented (separate scripts). Need a unified, modular application.
 
 ## 3. Target Users
-- AI agents project managers
-- Development teams building AI agent infrastructure
+- Project managers
+- Development teams building infrastructure
 - Operations teams managing deployments and monitoring
 
 ## 4. Success Metrics
@@ -33,6 +33,7 @@ Existing solutions are either too heavy (enterprise ERP) or too fragmented (sepa
 | FR-03 | Search customers by name/email | Medium |
 | FR-04 | View customer billing history | Medium |
 | FR-05 | Filter customers by tier | Low |
+| FR-21 | Retrieves non-sensitive profile details (name, email, preferences) | Medium |
 
 ### 5.2 Order Management (Order Context)
 | ID | Requirement | Priority |
@@ -41,7 +42,10 @@ Existing solutions are either too heavy (enterprise ERP) or too fragmented (sepa
 | FR-07 | Add/remove order items (products, quantities, prices) | High |
 | FR-08 | Update order status: Processing → Completed → Returned/Cancelled | High |
 | FR-09 | Mark items as eligible/non-eligible for return | Medium |
+| FR-25 | Evaluates return windows and policy logic to determine if an item is eligible for refund | Medium |
+| FR-26 | Initiates an item return and generates shipping labels; prevents duplicate submissions via idempotency keys | Medium |
 | FR-10 | Calculate order total from items | High |
+| FR-22 | Fetches past orders, line items, and fulfillment statuses | Medium |
 
 ### 5.3 Shipment Management (Shipment Context)
 | ID | Requirement | Priority |
@@ -51,6 +55,7 @@ Existing solutions are either too heavy (enterprise ERP) or too fragmented (sepa
 | FR-13 | Track shipments via tracking number | High |
 | FR-14 | Update delivery status: In Transit → Out for Delivery → Delivered | High |
 | FR-15 | Set estimated delivery dates | Medium |
+| FR-23 | Tracks real-time package locations, carriers, and estimated delivery dates | Medium |
 
 ### 5.4 Billing Management (Billing Context)
 | ID | Requirement | Priority |
@@ -60,6 +65,8 @@ Existing solutions are either too heavy (enterprise ERP) or too fragmented (sepa
 | FR-18 | Track transaction timestamps | Medium |
 | FR-19 | Store payment method masks (e.g., "Visa ending in 4242") | Medium |
 | FR-20 | View billing history per customer | Low |
+| FR-24 | Retrieves payment transactions with masked account/card details (PCI-DSS compliant) | Medium |
+| FR-27 | Executes monetary credit to customer balance/payment method; requires explicit auth and full audit logging | High |
 
 ## 6. Non-Functional Requirements
 
@@ -91,10 +98,10 @@ Existing solutions are either too heavy (enterprise ERP) or too fragmented (sepa
 ## 7. User Stories
 
 ### As a...
-1. **Project Manager**: "I want to manage customer tiers so I can segment my AI agents clients"
-2. **Developer**: "I want to create orders with items so I can track AI project resource allocation"
-3. **Operations**: "I want to track shipments so I can monitor AI infrastructure deployments"
-4. **Finance**: "I want billing records so I can invoice AI agents projects"
+1. **Project Manager**: "I want to manage customer tiers so I can segment my clients"
+2. **Developer**: "I want to create orders with items so I can track project resource allocation"
+3. **Operations**: "I want to track shipments so I can monitor deployments"
+4. **Finance**: "I want billing records so I can invoice projects"
 
 ### Example Flow:
 ```
@@ -121,6 +128,50 @@ Creates Shipment → Processes Billing Records
 - No external service dependencies initially
 - Docker containerizable for deployment
 
+### 8.4 Authentication & Authorization
+
+#### Authentication (authN)
+- Users must authenticate via API key or JWT token in `Authorization: Bearer <token>` header
+- Token validation performed by FastAPI dependency `get_current_user`
+- Session management: tokens valid for 24 hours, refreshable via `/auth/refresh`
+- Password policy: minimum 8 characters, mix of upper/lowercase and digits
+- Account lockout: 5 failed attempts, 30-minute lockout period
+
+#### Authorization (authZ)
+- Permissions scoped by tool catalog authorization levels:
+  - `Read` scope: access to `get_customer_account`, `get_order_history`, `get_delivery_status`, `get_billing_history`, `check_refund_eligibility`
+  - `Write` scope: access to `create_return_request`
+  - `Financial Write` scope: access to `issue_refund` (requires elevated permissions and audit logging)
+- Role-based access control (RBAC):
+  - **Viewer**: Read-only access to customer/order/summary data
+  - **Operator**: Can create orders, add items, create shipments, generate billing records
+  - **Manager**: Full CRUD access plus ability to issue refunds and authorize returns
+  - **Administrator**: All permissions plus user management and system configuration
+- Scope enforcement at FastAPI route level using `Depends(get_current_user_with_scope)`
+- All API requests must include valid authentication; unauthenticated requests receive `401 Unauthorized`
+- Authorization failures receive `403 Forbidden` with specific error reason
+
+#### AuthN/AuthZ Mapping to Functional Requirements
+
+| FR | Required Scopes | Role Minimum |
+|----|-----------------|--------------|
+| FR-01 (CRUD customers) | `Read` | Viewer |
+| FR-07 (Add order items) | `Write` | Operator |
+| FR-08 (Update order status) | `Write` | Operator |
+| FR-09 (Mark return eligibility) | `Read` | Viewer/Operator |
+| FR-09 (Create return request) | `Write` | Operator |
+| FR-16 (Issue refunds) | `Financial Write` | Manager/Administrator |
+| FR-13 (Track shipments) | `Read` | Viewer |
+| FR-11 (Create shipments) | `Write` | Operator |
+
+#### Integration with Tool Catalog
+All tool catalog endpoints (`/api/v1/tools/`) enforce:
+- Token validation before any operation
+- Scope checking matching tool's required authorization level
+- Audit log entry for `issue_refund` operations
+- Idempotency key validation for `create_return_request`
+
+---
 ## 9. Tool Integration
 
 ### Tool Catalog Summary
@@ -185,7 +236,7 @@ Authorization is enforced at the FastAPI route level using dependency injection 
 - Multi-tenant support
 
 ### 10.2 Phase 3 Features
-- AI-powered demand forecasting
+- Demand forecasting
 - Automated billing cycles
 - Integration with version control systems
 - Notification system (email/SMS)
