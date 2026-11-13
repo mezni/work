@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Tracker - Todo Board</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg-subtle: #12121a;
+            --fg: #e8e8f0;
+            --muted: #6b6b80;
+            --accent: #00d4aa;
+            --accent-dim: #00d4aa3d;
+            --card: #161620;
+            --border: #2a2a3a;
+            --red: #ff4757;
+            --yellow: #ffa502;
+            --green: #00ff88;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            min-height: 100vh;
+        }
+
+        .bg-pattern {
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(0, 212, 170, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 165, 2, 0.15) 0%, transparent 50%);
+        }
+
+        .glass {
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .border-custom {
+            border-color: var(--border);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg);
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(0, 212, 170, 0.4);
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .column-header {
+            background: var(--bg-subtle);
+            border-radius: 10px 10px 0 0;
+            padding: 12px 16px;
+            border-bottom: 3px solid var(--accent);
+        }
+
+        .task-item {
+            background: var(--bg-subtle);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            cursor: grab;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+
+        .task-item:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .task-item.dragging {
+            opacity: 0.5;
+        }
+
+        .task-item.remove-btn {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .task-item:hover .remove-btn {
+            opacity: 1;
+        }
+
+        .empty-state {
+            color: var(--muted);
+            font-style: italic;
+            padding: 20px;
+            text-align: center;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.3s ease-out forwards;
+        }
+
+        @media (max-width: 768px) {
+            .grid-cols-3 {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-pattern min-h-screen">
+
+    <div class="max-w-7xl mx-auto p-4 md:p-6">
+        
+        <!-- Header -->
+        <header class="mb-6 animate-fade-in-up">
+            <h1 class="text-3xl md:text-4xl font-bold tracking-tight mb-2">Learning Tracker</h1>
+            <p class="text-[var(--muted)]">Track your learning progress across columns</p>
+        </header>
+
+        <!-- Add Task Form -->
+        <div class="glass rounded-2xl p-4 md:p-6 mb-6 animate-fade-in-up" style="animation-delay: 0.1s;">
+            <form id="addTaskForm" class="space-y-3">
+                <div>
+                    <input
+                        type="text"
+                        id="newTask"
+                        placeholder="Add a new learning task..."
+                        class="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-lg px-4 py-3 focus:outline-none focus:border-[var(--accent)] focus:placeholder-opacity-50 transition-colors"
+                        maxlength="100"
+                        required
+                    />
+                </div>
+                <button
+                    type="submit"
+                    class="btn-primary w-full py-3 rounded-lg font-medium transition-all hover:shadow-lg"
+                >
+                    Add Task
+                </button>
+            </form>
+        </div>
+
+        <!-- Kanban Board -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in-up" style="animation-delay: 0.2s;">
+            
+            <!-- To Do Column -->
+            <div id="column-toDo" class="glass rounded-2xl h-[500px] overflow-y-auto p-6">
+                <div class="column-header">
+                    <h2 class="text-xl font-semibold" style="color: var(--accent);">To Do</h2>
+                    <span class="text-xs text-[var(--muted)] ml-2">3+ tasks</span>
+                </div>
+                <div id="toDoList" class="space-y-2 flex-1">
+                    <!-- Tasks loaded here -->
+                </div>
+                <p class="empty-state" id="empty-toDo">No tasks yet</p>
+            </div>
+
+            <!-- In Progress Column -->
+            <div id="column-inProgress" class="glass rounded-2xl h-[500px] overflow-y-auto p-6">
+                <div class="column-header">
+                    <h2 class="text-xl font-semibold" style="color: var(--yellow);">In Progress</h2>
+                    <span class="text-xs text-[var(--muted)] ml-2">In progress</span>
+                </div>
+                <div id="inProgressList" class="space-y-2 flex-1">
+                    <!-- Tasks loaded here -->
+                </div>
+                <p class="empty-state" id="empty-inProgress">No tasks yet</p>
+            </div>
+
+            <!-- Done Column -->
+            <div id="column-done" class="glass rounded-2xl h-[500px] overflow-y-auto p-6">
+                <div class="column-header">
+                    <h2 class="text-xl font-semibold" style="color: var(--green);">Done</h2>
+                    <span class="text-xs text-[var(--muted)] ml-2">Completed</span>
+                </div>
+                <div id="doneList" class="space-y-2 flex-1">
+                    <!-- Tasks loaded here -->
+                </div>
+                <p class="empty-state" id="empty-done">No tasks yet</p>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        // Initialize state
+        let allTasks = {{ tasks | tojson }};
+        let draggedTask = null;
+        let dropTarget = null;
+
+        // DOM Elements
+        const toDoList = document.getElementById('toDoList');
+        const inProgressList = document.getElementById('inProgressList');
+        const doneList = document.getElementById('doneList');
+        const emptyToDo = document.getElementById('empty-toDo');
+        const emptyInProgress = document.getElementById('empty-inProgress');
+        const emptyDone = document.getElementById('empty-done');
+        const addTaskForm = document.getElementById('addTaskForm');
+        const newTaskInput = document.getElementById('newTask');
+
+        // Column configurations
+        const columns = {
+            toDo: { element: document.getElementById('column-toDo'), list: toDoList, empty: emptyToDo, id: 'toDo' },
+            inProgress: { element: document.getElementById('column-inProgress'), list: inProgressList, empty: emptyInProgress, id: 'inProgress' },
+            done: { element: document.getElementById('column-done'), list: doneList, empty: emptyDone, id: 'done' }
+        };
+
+        // Render tasks
+        function renderTasks() {
+            // Clear all lists
+            toDoList.innerHTML = '';
+            inProgressList.innerHTML = '';
+            doneList.innerHTML = '';
+
+            // Group tasks by column
+            const columnTasks = {
+                toDo: [],
+                inProgress: [],
+                done: []
+            };
+
+            allTasks.forEach(task => {
+                columnTasks[task.column].push(task);
+            });
+
+            // Render each column
+            Object.keys(columnTasks).forEach(colId => {
+                const tasks = columnTasks[colId];
+                const col = columns[colId];
+                
+                if (tasks.length === 0) {
+                    col.empty.classList.remove('hidden');
+                    col.list.style.display = 'none';
+                    return;
+                }
+                
+                col.empty.classList.add('hidden');
+                col.list.style.display = 'block';
+
+                tasks.forEach((task, index) => {
+                    const taskItem = document.createElement('div');
+                    taskItem.className = 'task-item drag-item p-4 rounded-lg cursor-grab select-none transition-all duration-200';
+                    taskItem.setAttribute('draggable', 'true');
+                    taskItem.setAttribute('data-task-id', task.id);
+                    taskItem.setAttribute('data-column', task.column);
+                    taskItem.style.background = 'var(--bg-subtle)';
+                    taskItem.style.border = '1px solid var(--border)';
+                    
+                    // Set opacity for delayed animation
+                    taskItem.style.transitionDelay = `${index * 0.05}s`;
+                    
+                    taskItem.innerHTML = `
+                        <span class="font-medium text-[14px] flex-1">${escapeHtml(task.text)}</span>
+                        <button 
+                            class="remove-btn text-[10px] text-[var(--muted)] hover:text-[var(--red)] float-right"
+                            onclick="removeTask(${task.id})"
+                        >
+                            ✕
+                        </button>
+                    `;
+                    
+                    col.list.appendChild(taskItem);
+                });
+            });
+
+            // Re-apply drag events after render
+            setupDragAndDrop();
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Setup drag and drop events
+        function setupDragAndDrop() {
+            const dragItems = document.querySelectorAll('.drag-item');
+            
+            dragItems.forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragend', handleDragEnd);
+            });
+
+            // Allow dropping into lists
+            Object.values(columns).forEach(col => {
+                col.list.addEventListener('dragover', handleDragOver);
+                col.list.addEventListener('dragenter', handleDragEnter);
+                col.list.addEventListener('dragleave', handleDragLeave);
+                col.list.addEventListener('drop', handleDrop);
+            });
+        }
+
+        function handleDragStart(e) {
+            draggedTask = this;
+            setTimeout(() => {
+                this.classList.add('dragging');
+            }, 0);
+            
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', this.getAttribute('data-task-id'));
+        }
+
+        function handleDragEnd(e) {
+            draggedTask.classList.remove('dragging');
+            draggedTask = null;
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+
+        function handleDragEnter(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            this.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            
+            const lists = Object.values(columns);
+            const dropList = Array.from(lists).find(list => {
+                const rect = list.list.getBoundingClientRect();
+                const x = e.clientX;
+                const y = e.clientY;
+                return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+            })?.list;
+            
+            if (!dropList) return;
+
+            const taskId = e.dataTransfer.getData('text/plain');
+            const taskIndex = allTasks.findIndex(t => t.id == taskId);
+            
+            if (taskIndex === -1) return;
+
+            const [task] = allTasks.splice(taskIndex, 1);
+            
+            // Update column
+            const oldColumn = task.column;
+            task.column = dropList.id;
+            
+            // Add to new column
+            allTasks.push(task);
+            
+            // Re-render
+            renderTasks();
+            
+            // Save to server
+            saveTasksToServer();
+        }
+
+        // Remove task
+        window.removeTask = function(taskId) {
+            allTasks = allTasks.filter(t => t.id != taskId);
+            renderTasks();
+            saveTasksToServer();
+        }
+
+        // Add new task
+        addTaskForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = newTaskInput.value.trim();
+            if (!text) return;
+
+            const newTask = {
+                id: Date.now().toString(),
+                text: text,
+                column: 'toDo'
+            };
+            
+            allTasks.push(newTask);
+            renderTasks();
+            newTaskInput.value = '';
+
+            try {
+                await fetch('/api/tasks', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(newTask)
+                });
+            } catch (error) {
+                console.error('Failed to save task', error);
+                // Keep the task locally even if server fails
+            }
+        });
+
+        // Initial render
+        renderTasks();
+
+        // Make columns sortable via DnD
+        document.querySelectorAll('.column').forEach(col => {
+            col.addEventListener('dragover', e => e.preventDefault());
+        });
+    </script>
+</body>
+</html>

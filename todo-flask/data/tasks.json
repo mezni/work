@@ -1,0 +1,11 @@
+{
+  "toDo": [
+    {
+      "id": "1",
+      "text": "Manual test task",
+      "column": "toDo"
+    }
+  ],
+  "inProgress": [],
+  "done": []
+}
