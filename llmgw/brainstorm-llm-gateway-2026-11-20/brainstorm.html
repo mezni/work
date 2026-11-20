@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LLM GATEWAY // CONTROL PLANE — Brainstorm Artifact</title>
+<style>
+:root{
+  --bg:#060a12;
+  --bg2:#0a1020;
+  --panel:#0d1526;
+  --panel2:#111c31;
+  --line:#1e2c46;
+  --line2:#2b3d5c;
+  --ink:#dce8fa;
+  --muted:#8a9cb8;
+  --dim:#5c6d88;
+  --cyan:#4de2ff;
+  --magenta:#ff6ad5;
+  --amber:#ffc260;
+  --green:#5cffb1;
+  --red:#ff6b7d;
+  --violet:#a78bfa;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:
+    radial-gradient(1100px 700px at 78% -8%,rgba(77,226,255,.10),transparent 60%),
+    radial-gradient(900px 700px at 8% 22%,rgba(167,139,250,.08),transparent 60%),
+    radial-gradient(1000px 800px at 50% 105%,rgba(92,255,177,.07),transparent 60%),
+    linear-gradient(180deg,var(--bg),var(--bg2) 55%,var(--bg));
+  color:var(--ink);
+  font-family:var(--sans);
+  line-height:1.55;
+  overflow-x:hidden;
+}
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.28;
+  background-image:linear-gradient(rgba(90,130,180,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(90,130,180,.07) 1px,transparent 1px);
+  background-size:46px 46px;
+  mask-image:radial-gradient(circle at 50% 40%,#000 20%,transparent 78%);
+}
+body::after{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.16;
+  background:repeating-linear-gradient(0deg,transparent 0 3px,rgba(0,0,0,.35) 3px 4px);
+}
+::selection{background:rgba(77,226,255,.3);color:#fff}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:#060a12}
+::-webkit-scrollbar-thumb{background:#22324e;border-radius:9px}
+::-webkit-scrollbar-thumb:hover{background:#33486c}
+a{color:inherit;text-decoration:none}
+button{font:inherit}
+
+/* ── top bar ─────────────────────────────────────────── */
+.topbar{
+  position:sticky;top:0;z-index:80;
+  display:flex;align-items:center;gap:22px;
+  padding:12px clamp(18px,4vw,54px);
+  background:rgba(6,10,18,.82);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:center;gap:11px;flex:0 0 auto}
+.brand svg{width:26px;height:26px;filter:drop-shadow(0 0 8px rgba(77,226,255,.6))}
+.brand b{font:700 13px/1 var(--mono);letter-spacing:.16em}
+.brand small{display:block;font:500 9px/1.4 var(--mono);letter-spacing:.14em;color:var(--dim);margin-top:3px}
+.nav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+.nav a{
+  font:600 10px/1 var(--mono);letter-spacing:.12em;color:var(--muted);
+  padding:8px 10px;border:1px solid transparent;border-radius:4px;transition:.2s;
+}
+.nav a:hover,.nav a.active{color:var(--cyan);border-color:rgba(77,226,255,.35);background:rgba(77,226,255,.06)}
+.nav a span{color:var(--dim);margin-right:5px}
+.status{display:flex;align-items:center;gap:8px;font:600 10px/1 var(--mono);letter-spacing:.12em;color:var(--green);white-space:nowrap}
+.status i{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* ── shared ──────────────────────────────────────────── */
+.wrap{position:relative;z-index:1;max-width:1580px;margin:0 auto;padding:0 clamp(18px,4vw,54px)}
+.eyebrow{font:600 11px/1 var(--mono);letter-spacing:.24em;text-transform:uppercase;color:var(--cyan)}
+.eyebrow.mag{color:var(--magenta)}.eyebrow.red{color:var(--red)}.eyebrow.amber{color:var(--amber)}
+.eyebrow.green{color:var(--green)}
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1;transform:none}
+section{padding:100px 0 40px;scroll-margin-top:64px}
+.lens-head{display:grid;grid-template-columns:auto 1fr auto;gap:24px;align-items:end;margin-bottom:44px;padding-bottom:22px;border-bottom:1px solid var(--line);position:relative}
+.lens-head::after{content:"";position:absolute;left:0;bottom:-1px;width:120px;height:2px;background:var(--accent,var(--cyan));box-shadow:0 0 14px var(--accent,var(--cyan))}
+.lens-num{font:800 clamp(46px,7vw,84px)/.85 var(--mono);letter-spacing:-.06em;color:transparent;-webkit-text-stroke:1px var(--accent,var(--cyan));opacity:.75}
+.lens-head h2{margin:4px 0 8px;font-size:clamp(28px,4vw,52px);line-height:1;letter-spacing:-.03em;font-weight:800}
+.lens-head p{margin:0;color:var(--muted);max-width:740px;font-size:15px}
+.lens-head .meta{text-align:right;font:600 10px/1.8 var(--mono);letter-spacing:.14em;color:var(--dim);white-space:nowrap}
+.lens-head .meta b{color:var(--accent,var(--cyan));font-size:13px}
+.corner{position:relative}
+.corner::before,.corner::after{content:"";position:absolute;width:12px;height:12px;pointer-events:none;opacity:.55}
+.corner::before{top:-1px;left:-1px;border-top:1px solid var(--edge,var(--cyan));border-left:1px solid var(--edge,var(--cyan))}
+.corner::after{bottom:-1px;right:-1px;border-bottom:1px solid var(--edge,var(--cyan));border-right:1px solid var(--edge,var(--cyan))}
+
+/* ── hero ────────────────────────────────────────────── */
+.hero{min-height:calc(100vh - 52px);display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(20px,4vw,70px);align-items:center;padding:64px 0 70px}
+.hero h1{font-size:clamp(48px,7.4vw,108px);line-height:.9;letter-spacing:-.065em;margin:20px 0 24px;font-weight:850}
+.hero h1 em{font-style:normal;background:linear-gradient(100deg,var(--cyan),var(--violet) 48%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero .lede{font-size:clamp(15px,1.4vw,18px);color:var(--muted);max-width:540px;margin:0 0 30px}
+.hero .lede strong{color:var(--ink);font-weight:600}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap}
+.btn{
+  display:inline-flex;align-items:center;gap:10px;cursor:pointer;
+  font:700 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;
+  padding:14px 18px;border-radius:3px;border:1px solid var(--line2);
+  background:rgba(17,28,49,.7);color:var(--ink);transition:.22s;
+}
+.btn:hover{transform:translateY(-2px);border-color:var(--cyan);color:var(--cyan);box-shadow:0 8px 28px rgba(77,226,255,.13)}
+.btn.primary{background:linear-gradient(100deg,rgba(77,226,255,.18),rgba(167,139,250,.18));border-color:rgba(77,226,255,.55);color:#eafcff}
+.hero-stats{display:flex;gap:34px;margin-top:46px;flex-wrap:wrap}
+.hero-stats div{border-left:1px solid var(--line2);padding-left:14px}
+.hero-stats b{display:block;font:800 26px/1 var(--mono);color:var(--ink)}
+.hero-stats span{font:600 9px/1.6 var(--mono);letter-spacing:.18em;color:var(--dim);text-transform:uppercase}
+.diagram{position:relative;border:1px solid var(--line);background:linear-gradient(160deg,rgba(13,21,38,.95),rgba(8,13,24,.9));padding:18px;border-radius:6px;box-shadow:0 30px 90px rgba(0,0,0,.45),inset 0 0 60px rgba(77,226,255,.03)}
+.diagram .dhead{display:flex;justify-content:space-between;font:600 9px/1 var(--mono);letter-spacing:.16em;color:var(--dim);margin-bottom:6px}
+.diagram svg{width:100%;height:auto;display:block}
+.dashflow{stroke-dasharray:5 9;animation:flow 1.4s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-28}}
+.hero-note{margin-top:12px;display:flex;justify-content:space-between;font:600 9px/1 var(--mono);letter-spacing:.13em;color:var(--dim)}
+.hero-note b{color:var(--green)}
+
+.ticker{position:relative;z-index:1;overflow:hidden;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:rgba(10,16,32,.7)}
+.ticker-track{display:flex;gap:34px;width:max-content;padding:11px 0;animation:tick 38s linear infinite;font:700 10px/1 var(--mono);letter-spacing:.22em;color:var(--dim);white-space:nowrap}
+.ticker-track b{color:var(--cyan);font-weight:700}
+.ticker-track i{color:var(--line2);font-style:normal}
+@keyframes tick{to{transform:translateX(-50%)}}
+
+/* ── 01 SCAMPER patch bay ────────────────────────────── */
+#lens01{--accent:var(--cyan)}
+.patchbay{display:grid;grid-template-columns:repeat(auto-fit,minmax(214px,1fr));gap:12px}
+.port{
+  --c:var(--cyan);position:relative;padding:16px 14px 18px;
+  background:linear-gradient(180deg,rgba(17,28,49,.92),rgba(10,16,30,.92));
+  border:1px solid var(--line);border-radius:4px;transition:.28s;overflow:hidden;
+}
+.port::before{content:"";position:absolute;left:0;top:0;width:100%;height:2px;background:var(--c);opacity:.55;transition:.28s}
+.port:hover{transform:translateY(-5px);border-color:var(--c);box-shadow:0 16px 40px rgba(0,0,0,.4),0 0 0 1px color-mix(in srgb,var(--c) 22%,transparent)}
+.port:hover::before{opacity:1;box-shadow:0 0 16px var(--c)}
+.port-head{display:flex;gap:11px;align-items:center;margin-bottom:14px}
+.port-id{width:36px;height:36px;flex:0 0 36px;display:grid;place-items:center;font:800 17px/1 var(--mono);color:var(--c);border:1px solid var(--c);border-radius:3px;background:color-mix(in srgb,var(--c) 9%,transparent);box-shadow:inset 0 0 14px color-mix(in srgb,var(--c) 12%,transparent)}
+.port-head h3{margin:0;font:700 13px/1.2 var(--mono);letter-spacing:.05em}
+.port-head p{margin:3px 0 0;font:500 10px/1.3 var(--mono);color:var(--dim)}
+.led{margin-left:auto;width:6px;height:6px;border-radius:50%;background:var(--c);box-shadow:0 0 10px var(--c);opacity:.5;transition:.28s;flex:0 0 auto}
+.port:hover .led{opacity:1;animation:blink 1s infinite}
+.jackline{height:1px;background:linear-gradient(90deg,var(--c),transparent);opacity:.55;margin-bottom:14px;position:relative;overflow:hidden}
+.jackline::after{content:"";position:absolute;left:-30%;top:-1px;width:30%;height:3px;background:var(--c);filter:blur(2px);opacity:0}
+.port:hover .jackline::after{opacity:.9;animation:jack 1.1s linear infinite}
+@keyframes jack{to{left:100%}}
+.patches{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.patches li{display:grid;grid-template-columns:22px 1fr;gap:8px;align-items:start}
+.patch-no{font:700 9px/1.7 var(--mono);color:var(--c);opacity:.7}
+.patches p{margin:0;font-size:12.2px;line-height:1.45;color:#b9c8dd}
+.port:hover .patches p{color:#d8e6f8}
+.scamper-read{margin-top:26px;display:flex;gap:14px;align-items:center;padding:15px 18px;border:1px dashed var(--line2);border-radius:4px;background:rgba(77,226,255,.035)}
+.scamper-read .tag{font:700 9px/1 var(--mono);letter-spacing:.18em;color:var(--cyan);white-space:nowrap}
+.scamper-read p{margin:0;font-size:13px;color:var(--muted)}
+.scamper-read b{color:var(--ink);font-weight:600}
+
+/* ── 02 Cross-pollination graft lab ──────────────────── */
+#lens02{--accent:var(--magenta)}
+.graftlab{display:grid;grid-template-columns:1.05fr .95fr;gap:26px;position:relative}
+.donors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-content:start}
+.donor{
+  text-align:left;cursor:pointer;position:relative;overflow:hidden;
+  padding:13px 14px;border:1px solid var(--line);border-radius:4px;
+  background:linear-gradient(150deg,rgba(17,28,49,.9),rgba(10,16,30,.9));
+  color:var(--ink);transition:.24s;
+}
+.donor::after{content:"→";position:absolute;right:10px;top:11px;font:700 14px/1 var(--mono);color:var(--line2);transition:.24s}
+.donor:hover,.donor.hot{border-color:var(--magenta);transform:translateX(3px);box-shadow:0 0 0 1px rgba(255,106,213,.2),0 12px 30px rgba(0,0,0,.35)}
+.donor:hover::after,.donor.hot::after{color:var(--magenta);right:6px}
+.donor-id{font:700 9px/1 var(--mono);letter-spacing:.14em;color:var(--magenta)}
+.donor-name{display:block;font:700 12px/1.3 var(--mono);letter-spacing:.06em;margin:5px 0 6px;text-transform:uppercase}
+.donor-idea{display:block;font-size:11.5px;line-height:1.42;color:var(--muted)}
+.donor.hot .donor-idea{color:#d9e7f8}
+.reactor{position:sticky;top:90px;min-height:540px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px}
+.graft-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:visible}
+.graft-svg path{fill:none;stroke:rgba(255,106,213,.16);stroke-width:1.2;stroke-dasharray:3 7;transition:.3s}
+.graft-svg path.hot{stroke:var(--magenta);stroke-width:2;stroke-dasharray:none;filter:drop-shadow(0 0 7px var(--magenta));animation:flow 1s linear infinite}
+.corehex{position:relative;z-index:2;width:200px;height:200px;display:grid;place-items:center;text-align:center}
+.corehex svg{position:absolute;inset:0;width:100%;height:100%;animation:spin 28s linear infinite}
+.corehex svg.inner{animation:spin 18s linear infinite reverse;opacity:.5}
+@keyframes spin{to{transform:rotate(360deg)}}
+.corehex .co{position:relative;z-index:3;padding:0 22px}
+.corehex .co b{display:block;font:800 15px/1.2 var(--mono);letter-spacing:.1em;color:#fff;text-shadow:0 0 18px rgba(255,106,213,.7)}
+.corehex .co span{display:block;margin-top:8px;font:600 8px/1.6 var(--mono);letter-spacing:.2em;color:var(--magenta)}
+.core-readout{position:relative;z-index:3;min-height:92px;max-width:400px;text-align:center;border:1px solid var(--line);border-radius:4px;background:rgba(6,10,18,.86);padding:14px 18px}
+.core-readout b{display:block;font:700 9px/1 var(--mono);letter-spacing:.2em;color:var(--magenta);margin-bottom:8px}
+.core-readout span{font-size:12.5px;line-height:1.5;color:var(--muted)}
+.core-readout.default span{color:var(--dim);font-family:var(--mono);font-size:11px;letter-spacing:.06em}
+.reactor-hint{position:relative;z-index:3;font:600 9px/1 var(--mono);letter-spacing:.18em;color:var(--dim)}
+
+/* ── 03 Failure Analysis chaos bench ─────────────────── */
+#lens03{--accent:var(--red)}
+.bench{background:linear-gradient(180deg,rgba(17,28,49,.7),rgba(8,12,22,.85));border:1px solid var(--line);border-radius:5px;padding:20px;box-shadow:inset 0 0 80px rgba(255,107,125,.035)}
+.bench-controls{display:flex;align-items:center;gap:24px;justify-content:space-between;flex-wrap:wrap;padding-bottom:18px;margin-bottom:16px;border-bottom:1px solid var(--line)}
+.coverage{display:flex;align-items:center;gap:12px;min-width:300px}
+.coverage span{font:700 9px/1 var(--mono);letter-spacing:.18em;color:var(--muted);white-space:nowrap}
+.meter{flex:1;height:7px;background:#1a2539;border-radius:9px;overflow:hidden;border:1px solid var(--line2)}
+.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--red),var(--amber) 55%,var(--green));box-shadow:0 0 14px rgba(92,255,177,.5);transition:width .35s ease}
+.coverage b{font:800 13px/1 var(--mono);color:var(--green);min-width:42px;text-align:right}
+.chaos-btn{cursor:pointer;border:1px solid rgba(255,107,125,.6);background:rgba(255,107,125,.08);color:#ffd7dd;border-radius:3px;padding:11px 16px;font:700 10px/1 var(--mono);letter-spacing:.14em;transition:.2s}
+.chaos-btn:hover{background:rgba(255,107,125,.2);box-shadow:0 0 24px rgba(255,107,125,.18)}
+.chaos-btn:disabled{opacity:.45;cursor:wait}
+.rack{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:9px}
+.blade{
+  --b:var(--red);display:grid;grid-template-columns:1fr 22px 1fr;gap:10px;align-items:center;
+  position:relative;padding:13px 14px;border:1px solid var(--line);border-left:2px solid var(--b);
+  border-radius:3px;background:rgba(10,16,30,.85);cursor:pointer;transition:.25s;
+}
+.blade:hover{background:rgba(17,28,49,.95);transform:translateX(3px)}
+.fault h4,.guard h4{margin:0 0 5px;font:700 9px/1 var(--mono);letter-spacing:.15em}
+.fault h4{color:var(--red)}.guard h4{color:var(--green)}
+.fault p,.guard p{margin:0;font-size:11.5px;line-height:1.42;color:var(--muted)}
+.fault-no{display:block;font:600 8px/1 var(--mono);letter-spacing:.12em;color:var(--dim);margin-bottom:5px}
+.arrow{text-align:center;font:700 13px/1 var(--mono);color:var(--line2)}
+.blade-led{position:absolute;right:8px;top:8px;width:5px;height:5px;border-radius:50%;background:var(--red);box-shadow:0 0 9px var(--red)}
+.blade.mitigated{--b:var(--green);border-color:rgba(92,255,177,.28);border-left-color:var(--green)}
+.blade.mitigated .arrow{color:var(--green)}
+.blade.mitigated .blade-led{background:var(--green);box-shadow:0 0 9px var(--green)}
+.blade.mitigated .fault h4{color:var(--dim)}
+.rack.drilling{animation:jit .12s steps(2) infinite}
+@keyframes jit{0%{transform:translateX(0)}50%{transform:translateX(1px)}100%{transform:translateX(-1px)}}
+.bench-foot{margin-top:16px;font:600 9px/1.6 var(--mono);letter-spacing:.14em;color:var(--dim)}
+
+/* ── 04 Scenario Cross horizon ───────────────────────── */
+#lens04{--accent:var(--amber)}
+.horizon-svg{width:100%;height:120px;display:block;margin-bottom:-6px}
+.horizon-svg .trackline{fill:none;stroke:rgba(255,194,96,.35);stroke-width:1.5}
+.horizon-svg .pulse{fill:none;stroke:var(--amber);stroke-width:2;stroke-dasharray:3 22;filter:drop-shadow(0 0 5px var(--amber));animation:flow 1.7s linear infinite}
+.stations{display:grid;grid-template-columns:repeat(3,1fr) 1.5fr;gap:14px;align-items:stretch}
+.station{position:relative;border:1px solid var(--line);border-top:2px solid var(--amber);border-radius:3px;background:linear-gradient(180deg,rgba(17,28,49,.9),rgba(9,15,27,.9));padding:16px;transition:.25s}
+.station:hover{transform:translateY(-5px);border-color:rgba(255,194,96,.5);box-shadow:0 18px 40px rgba(0,0,0,.4)}
+.station .yr{font:800 11px/1 var(--mono);letter-spacing:.18em;color:var(--amber)}
+.station ul{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:11px}
+.station li{display:grid;grid-template-columns:10px 1fr;gap:8px;font-size:12.5px;line-height:1.45;color:#bdcade}
+.station li::before{content:"";width:5px;height:5px;background:var(--amber);border-radius:50%;margin-top:7px;box-shadow:0 0 8px var(--amber)}
+.fork{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.future{border:1px solid var(--line);border-radius:3px;padding:13px 12px;background:rgba(8,13,24,.85);transition:.25s;position:relative;overflow:hidden}
+.future::before{content:"";position:absolute;left:0;top:0;width:100%;height:2px;background:var(--fc);box-shadow:0 0 10px var(--fc)}
+.future:hover{transform:translateY(-4px);border-color:var(--fc)}
+.future b{display:block;font:700 9px/1.4 var(--mono);letter-spacing:.13em;color:var(--fc);margin-bottom:8px}
+.future p{margin:0;font-size:11.5px;line-height:1.45;color:#bccadd}
+.future.f1{--fc:var(--cyan)}.future.f2{--fc:var(--red)}.future.f3{--fc:var(--green)}
+.horizon-foot{margin-top:20px;font:600 9px/1.6 var(--mono);letter-spacing:.16em;color:var(--dim)}
+
+/* ── 05 Synthesis climax ─────────────────────────────── */
+#synthesis{--accent:var(--green);padding-bottom:110px}
+#synthesis .lens-head{border-color:rgba(92,255,177,.25)}
+.constellation{position:relative;height:760px;max-width:1120px;margin:0 auto}
+.pillar-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:0}
+.pillar-svg path{fill:none;stroke:rgba(92,255,177,.22);stroke-width:1.3;stroke-dasharray:4 8;stroke-dashoffset:600;transition:stroke-dashoffset 1.4s ease}
+#synthesis.online .pillar-svg path{stroke-dashoffset:0;animation:flow 2.4s linear infinite}
+.core-node{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:230px;height:230px;display:grid;place-items:center;text-align:center;z-index:3;
+}
+.core-node .ring{position:absolute;border-radius:50%;border:1px dashed rgba(92,255,177,.3)}
+.core-node .r1{inset:-38px;animation:spin 40s linear infinite}
+.core-node .r2{inset:-14px;border-style:solid;border-color:rgba(77,226,255,.22);animation:spin 24s linear infinite reverse}
+.core-node .r3{inset:8px;border-color:rgba(255,106,213,.25);animation:spin 16s linear infinite}
+.core-node .hexbg{position:absolute;inset:24px;background:radial-gradient(circle,rgba(15,40,42,.95),rgba(8,16,28,.98));clip-path:polygon(50% 0,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%);border:1px solid var(--green);box-shadow:0 0 70px rgba(92,255,177,.13)}
+.core-node .hexline{position:absolute;inset:24px;clip-path:polygon(50% 0,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%);background:conic-gradient(from 0deg,transparent 0 70%,rgba(92,255,177,.55) 84%,transparent 100%);animation:spin 5s linear infinite;mask:polygon(50% 0,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%)}
+.core-node .ctext{position:relative;z-index:4}
+.core-node .ctext b{display:block;font:800 16px/1.15 var(--mono);letter-spacing:.08em;color:#fff;text-shadow:0 0 22px rgba(92,255,177,.65)}
+.core-node .ctext span{display:block;margin-top:8px;font:600 8px/1.5 var(--mono);letter-spacing:.18em;color:var(--green)}
+.pillar{
+  position:absolute;left:var(--x);top:var(--y);transform:translate(-50%,-50%) scale(.9);
+  width:238px;padding:14px 15px;z-index:2;
+  border:1px solid var(--line);border-top:2px solid var(--pc);border-radius:3px;
+  background:linear-gradient(165deg,rgba(17,28,49,.97),rgba(9,15,27,.97));
+  opacity:0;transition:opacity .6s ease,transform .6s cubic-bezier(.2,.8,.2,1),box-shadow .25s;
+}
+#synthesis.online .pillar{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#synthesis.online .pillar:nth-of-type(1){transition-delay:.15s}
+#synthesis.online .pillar:nth-of-type(2){transition-delay:.28s}
+#synthesis.online .pillar:nth-of-type(3){transition-delay:.41s}
+#synthesis.online .pillar:nth-of-type(4){transition-delay:.54s}
+#synthesis.online .pillar:nth-of-type(5){transition-delay:.67s}
+#synthesis.online .pillar:nth-of-type(6){transition-delay:.8s}
+.pillar:hover{box-shadow:0 14px 40px rgba(0,0,0,.45),0 0 0 1px var(--pc);z-index:5}
+.pillar .id{font:700 9px/1 var(--mono);letter-spacing:.16em;color:var(--pc)}
+.pillar h3{margin:7px 0 8px;font:700 12px/1.3 var(--mono);letter-spacing:.02em;color:#fff}
+.pillar p{margin:0;font-size:11.3px;line-height:1.45;color:var(--muted)}
+.p1{--pc:var(--cyan);--x:50%;--y:9%}
+.p2{--pc:var(--violet);--x:83%;--y:29%}
+.p3{--pc:var(--magenta);--x:83%;--y:71%}
+.p4{--pc:var(--amber);--x:50%;--y:91%}
+.p5{--pc:var(--green);--x:17%;--y:71%}
+.p6{--pc:#6fa8ff;--x:17%;--y:29%}
+.feed{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:-10px auto 26px;font:600 9px/1 var(--mono);letter-spacing:.16em;color:var(--dim)}
+.feed span{padding:7px 11px;border:1px solid var(--line);border-radius:20px;background:rgba(10,16,30,.7)}
+.feed span b{color:var(--green);font-weight:700}
+.spec{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:12px;margin-top:34px}
+.spec-card{border:1px solid var(--line);border-radius:4px;padding:18px;background:linear-gradient(160deg,rgba(17,28,49,.9),rgba(9,15,27,.9));position:relative;overflow:hidden}
+.spec-card::before{content:"";position:absolute;left:0;top:0;width:100%;height:2px;background:var(--sc,var(--green));opacity:.7}
+.spec-card h4{margin:0 0 14px;font:700 10px/1 var(--mono);letter-spacing:.2em;color:var(--sc,var(--green))}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{font:600 10.5px/1.4 var(--mono);padding:7px 9px;border:1px solid var(--line2);border-radius:3px;color:#c2d1e6;background:rgba(6,10,18,.6)}
+.spec-card.s1{--sc:var(--green)}
+.spec-card.s2{--sc:var(--cyan)}
+.spec-card.s3{--sc:var(--magenta)}
+.manifest{margin-top:12px;border:1px solid var(--line);border-radius:4px;padding:18px;background:rgba(9,15,27,.85)}
+.manifest h4{margin:0 0 14px;font:700 10px/1 var(--mono);letter-spacing:.2em;color:var(--dim)}
+.manifest .chips{gap:8px}
+.manifest .chip{border-style:dashed;color:var(--muted)}
+
+footer{position:relative;z-index:1;border-top:1px solid var(--line);padding:34px clamp(18px,4vw,54px) 46px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;font:600 9px/1.8 var(--mono);letter-spacing:.16em;color:var(--dim)}
+footer b{color:var(--green)}
+
+@media(max-width:1180px){
+  .hero{grid-template-columns:1fr;gap:44px;padding-top:54px}
+  .diagram{max-width:680px}
+  .stations{grid-template-columns:repeat(3,1fr)}
+  .fork{grid-column:1/-1;grid-template-columns:repeat(3,1fr)}
+  .spec{grid-template-columns:1fr 1fr}
+  .spec-card.s3{grid-column:1/-1}
+}
+@media(max-width:900px){
+  .graftlab{grid-template-columns:1fr}
+  .reactor{position:relative;top:0;min-height:420px}
+  .graft-svg{display:none}
+  .constellation{height:auto;display:grid;gap:12px;padding-top:160px}
+  .pillar-svg{display:none}
+  .core-node{top:60px;left:50%;width:190px;height:190px}
+  .pillar{position:relative;left:auto!important;top:auto!important;transform:none!important;width:100%;opacity:1!important}
+  #synthesis.online .pillar{transform:none!important}
+  .core-node .r1{inset:-22px}
+}
+@media(max-width:700px){
+  section{padding-top:72px}
+  .nav{display:none}
+  .status{margin-left:auto}
+  .lens-head{grid-template-columns:auto 1fr;gap:14px}
+  .lens-head .meta{grid-column:1/-1;text-align:left}
+  .donors{grid-template-columns:1fr}
+  .stations{grid-template-columns:1fr}
+  .fork{grid-template-columns:1fr}
+  .spec{grid-template-columns:1fr}
+  .spec-card.s3{grid-column:auto}
+  .hero-stats{gap:20px}
+  .rack{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001s!important;animation-iteration-count:1!important;transition-duration:.001s!important;scroll-behavior:auto!important}
+  .reveal{opacity:1;transform:none}
+  .pillar{opacity:1;transform:translate(-50%,-50%)}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="#top" aria-label="Back to top">
+    <svg viewBox="0 0 32 32" fill="none"><path d="M16 2 29 9.5v13L16 30 3 22.5v-13L16 2Z" stroke="#4de2ff" stroke-width="1.4"/><path d="M16 9 23 13v6l-7 4-7-4v-6l7-4Z" stroke="#ff6ad5" stroke-width="1.2"/><circle cx="16" cy="16" r="2.4" fill="#5cffb1"/></svg>
+    <span><b>GATEWAY // BRAIN</b><small>IDEATION RUN · 2026-11-20</small></span>
+  </a>
+  <nav class="nav" aria-label="Sections">
+    <a href="#lens01"><span>01</span>SCAMPER</a>
+    <a href="#lens02"><span>02</span>CROSS-POLLINATION</a>
+    <a href="#lens03"><span>03</span>FAILURE</a>
+    <a href="#lens04"><span>04</span>FUTURES</a>
+    <a href="#synthesis"><span>05</span>SYNTHESIS</a>
+  </nav>
+  <div class="status"><i></i>CONTROL PLANE ONLINE</div>
+</header>
+
+<main class="wrap" id="top">
+
+  <section class="hero" style="padding-top:70px">
+    <div>
+      <div class="eyebrow">Autonomous ideation run &nbsp;/&nbsp; topic: LLM gateway — design and build</div>
+      <h1>ONE DOOR.<br><em>EVERY MODEL.</em></h1>
+      <p class="lede">Sixty-five signals routed through four creative lenses — then collapsed into a single <strong>provider-agnostic control plane</strong>. This is the trace of the session: the switches thrown, the failures injected, the futures scanned, and the design that survived all four.</p>
+      <div class="hero-actions">
+        <a class="btn primary" href="#lens01">Enter the fabric <span aria-hidden="true">↓</span></a>
+        <a class="btn" href="#synthesis">Jump to synthesis <span aria-hidden="true">↗</span></a>
+      </div>
+      <div class="hero-stats">
+        <div><b>65</b><span>Signals captured</span></div>
+        <div><b>04</b><span>Creative lenses</span></div>
+        <div><b>06</b><span>Core pillars</span></div>
+        <div><b>01</b><span>Gateway</span></div>
+      </div>
+    </div>
+    <div class="diagram corner" aria-label="Network diagram: applications through one gateway to multiple model providers">
+      <div class="dhead"><span>TOPOLOGY / BEFORE → AFTER</span><span>PKT: 65</span></div>
+      <svg viewBox="0 0 600 340" role="img">
+        <defs>
+          <linearGradient id="gg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#4de2ff"/><stop offset="1" stop-color="#a78bfa"/></linearGradient>
+          <filter id="glow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <path id="pa" d="M92 70 C 170 70, 190 170, 258 170"/>
+          <path id="pb" d="M92 170 L 258 170"/>
+          <path id="pc" d="M92 270 C 170 270, 190 170, 258 170"/>
+          <path id="pd" d="M352 170 C 420 170, 440 52, 512 52"/>
+          <path id="pe" d="M352 170 C 425 170, 440 124, 512 124"/>
+          <path id="pf" d="M352 170 C 425 170, 440 216, 512 216"/>
+          <path id="pg" d="M352 170 C 420 170, 440 288, 512 288"/>
+        </defs>
+        <g stroke="#2b3d5c" fill="none"><use href="#pa"/><use href="#pb"/><use href="#pc"/><use href="#pd"/><use href="#pe"/><use href="#pf"/><use href="#pg"/></g>
+        <g stroke="#4de2ff" stroke-width="1.4" opacity=".9" fill="none" class="dashflow"><use href="#pa"/><use href="#pb"/><use href="#pc"/></g>
+        <g stroke="#ff6ad5" stroke-width="1.4" opacity=".9" fill="none" class="dashflow"><use href="#pd"/><use href="#pe"/><use href="#pf"/><use href="#pg"/></g>
+        <g fill="#4de2ff" filter="url(#glow)">
+          <circle r="3.2"><animateMotion dur="2.6s" repeatCount="indefinite"><mpath href="#pa"/></animateMotion></circle>
+          <circle r="3.2"><animateMotion dur="2.1s" begin=".5s" repeatCount="indefinite"><mpath href="#pb"/></animateMotion></circle>
+          <circle r="3.2"><animateMotion dur="2.9s" begin=".9s" repeatCount="indefinite"><mpath href="#pc"/></animateMotion></circle>
+        </g>
+        <g fill="#ff6ad5" filter="url(#glow)">
+          <circle r="3.2"><animateMotion dur="2.4s" repeatCount="indefinite"><mpath href="#pd"/></animateMotion></circle>
+          <circle r="3.2"><animateMotion dur="2.8s" begin=".6s" repeatCount="indefinite"><mpath href="#pe"/></animateMotion></circle>
+          <circle r="3.2"><animateMotion dur="2.2s" begin="1.1s" repeatCount="indefinite"><mpath href="#pf"/></animateMotion></circle>
+          <circle r="3.2"><animateMotion dur="3s" begin=".3s" repeatCount="indefinite"><mpath href="#pg"/></animateMotion></circle>
+        </g>
+        <g font-family="ui-monospace,monospace" font-size="10" fill="#8a9cb8">
+          <text x="22" y="66">APP-A</text><text x="22" y="166">APP-B</text><text x="22" y="266">APP-C</text>
+          <text x="524" y="56">OPENAI</text><text x="524" y="128">ANTHROPIC</text><text x="524" y="220">GEMINI</text><text x="524" y="292">LOCAL vLLM</text>
+          <text x="130" y="330" fill="#5c6d88">N×M INTEGRATIONS</text>
+          <text x="470" y="330" fill="#5c6d88">N+M</text>
+        </g>
+        <g fill="#16243b" stroke="#4de2ff" stroke-width="1.4">
+          <rect x="258" y="137" width="94" height="66" rx="4"/>
+          <rect x="70" y="53" width="22" height="22" rx="3"/><rect x="70" y="153" width="22" height="22" rx="3"/><rect x="70" y="253" width="22" height="22" rx="3"/>
+          <rect x="488" y="45" width="22" height="16" rx="3" stroke="#ff6ad5"/><rect x="488" y="117" width="22" height="16" rx="3" stroke="#ff6ad5"/><rect x="488" y="209" width="22" height="16" rx="3" stroke="#ff6ad5"/><rect x="488" y="281" width="22" height="16" rx="3" stroke="#ff6ad5"/>
+        </g>
+        <text x="305" y="166" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" font-weight="700" fill="#eafcff">GATEWAY</text>
+        <text x="305" y="184" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" letter-spacing="1.5" fill="#5cffb1">CONTROL PLANE</text>
+      </svg>
+      <div class="hero-note"><span>1 ENDPOINT · 4 ADAPTERS · POLICY AT THE EDGE</span><b>● ROUTING</b></div>
+    </div>
+  </section>
+
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker-track">
+      <span>UNIFIED API</span><i>◆</i><span><b>HOT-SWAP ADAPTERS</b></span><i>◆</i><span>VIRTUAL KEYS</span><i>◆</i><span><b>POLICY ROUTING</b></span><i>◆</i><span>FAILOVER</span><i>◆</i><span><b>SEMANTIC CACHE</b></span><i>◆</i><span>QUOTAS &amp; BUDGETS</span><i>◆</i><span><b>GUARDRAILS</b></span><i>◆</i><span>TRACING &amp; REPLAY</span><i>◆</i>
+      <span>UNIFIED API</span><i>◆</i><span><b>HOT-SWAP ADAPTERS</b></span><i>◆</i><span>VIRTUAL KEYS</span><i>◆</i><span><b>POLICY ROUTING</b></span><i>◆</i><span>FAILOVER</span><i>◆</i><span><b>SEMANTIC CACHE</b></span><i>◆</i><span>QUOTAS &amp; BUDGETS</span><i>◆</i><span><b>GUARDRAILS</b></span><i>◆</i><span>TRACING &amp; REPLAY</span><i>◆</i>
+    </div>
+  </div>
+
+  <section id="lens01" class="reveal">
+    <div class="lens-head">
+      <div class="lens-num">01</div>
+      <div><div class="eyebrow">Divergent lens / switching fabric</div><h2>SCAMPER Method</h2><p>Seven verbs thrown across the problem like patch cables. Each port rewires a different part of the gateway — what gets swapped, fused, borrowed, tuned, repurposed, deleted, or turned inside out.</p></div>
+      <div class="meta">7 PORTS<br><b>34 PATCHES</b><br>ALL CIRCUITS LIVE</div>
+    </div>
+    <div class="patchbay">
+      <article class="port corner" style="--c:#4de2ff;--edge:#4de2ff">
+        <div class="port-head"><span class="port-id">S</span><div><h3>Substitute</h3><p>Swap the part, keep the job.</p></div><span class="led"></span></div>
+        <div class="jackline"></div>
+        <ul class="patches">
+          <li><span class="patch-no">01</span><p>Unified OpenAI-compatible API facade so apps swap providers without code changes.</p></li>
+          <li><span class="patch-no">02</span><p>Hot-swap model backends — OpenAI / Anthropic / Gemini / local vLLM — via config, not deploys.</p></li>
+          <li><span class="patch-no">03</span><p>Replace hardcoded API keys in apps with gateway-issued virtual keys and tokens.</p></li>
+          <li><span class="patch-no">04</span><p>Substitute raw prompts with managed prompt templates and versioned prompt IDs.</p></li>
+          <li><span class="patch-no">05</span><p>Replace per-app billing with centralized cost attribution and chargeback.</p></li>
+        </ul>
+      </article>
+      <article class="port corner" style="--c:#a78bfa;--edge:#a78bfa">
+        <div class="port-head"><span class="port-id">C</span><div><h3>Combine</h3><p>Fuse two mechanisms into one.</p></div><span class="led"></span></div>
+        <div class="jackline"></div>
+        <ul class="patches">
+          <li><span class="patch-no">01</span><p>Route + fallback + load-balance in one policy: primary model, fallback chain, weighted pools.</p></li>
+          <li><span class="patch-no">02</span><p>Combine streaming responses with real-time token/cost metering and SSE passthrough.</p></li>
+          <li><span class="patch-no">03</span><p>Bundle authn/authz, quotas, and audit logging into a single request pipeline.</p></li>
+          <li><span class="patch-no">04</span><p>Merge semantic cache + exact cache + prompt-prefix caching for latency and cost wins.</p></li>
+          <li><span class="patch-no">05</span><p>Combine RAG retrieval hooks and tool-call mediation in the gateway layer.</p></li>
+        </ul>
+      </article>
+      <article class="port corner" style="--c:#6fa8ff;--edge:#6fa8ff">
+        <div class="port-head"><span class="port-id">A</span><div><h3>Adapt</h3><p>Borrow proven machinery.</p></div><span class="led"></span></div>
+        <div class="jackline"></div>
+        <ul class="patches">
+          <li><span class="patch-no">01</span><p>Adapt API-gateway patterns from Kong/Envoy — plugins, middleware, declarative routes, canaries.</p></li>
+          <li><span class="patch-no">02</span><p>Adapt CDN ideas — edge/regional PoPs, geo-routing to nearest provider region, response caching.</p></li>
+          <li><span class="patch-no">03</span><p>Adapt feature-flag systems for gradual model rollouts and A/B prompt/model experiments.</p></li>
+          <li><span class="patch-no">04</span><p>Borrow circuit-breaker and bulkhead patterns from microservices for provider resilience.</p></li>
+          <li><span class="patch-no">05</span><p>Adapt OAuth/OIDC and RBAC from IAM platforms for tenant and team-level access control.</p></li>
+        </ul>
+      </article>
+      <article class="port corner" style="--c:#ffc260;--edge:#ffc260">
+        <div class="port-head"><span class="port-id">M</span><div><h3>Modify</h3><p>Tune the shape of the request.</p></div><span class="led"></span></div>
+        <div class="jackline"></div>
+        <ul class="patches">
+          <li><span class="patch-no">01</span><p>Dynamic context-window management — auto-truncate/summarize history to fit model limits.</p></li>
+          <li><span class="patch-no">02</span><p>Request/response transformation layer — normalize schemas, map parameters across vendors.</p></li>
+          <li><span class="patch-no">03</span><p>Configurable retry policies with exponential backoff, jitter, and idempotency keys.</p></li>
+          <li><span class="patch-no">04</span><p>Token-aware rate limiting (TPM/RPM/concurrency) per key, user, team, or tenant.</p></li>
+          <li><span class="patch-no">05</span><p>Response shaping — enforce JSON schema/structured output, normalize function calling.</p></li>
+        </ul>
+      </article>
+      <article class="port corner" style="--c:#5cffb1;--edge:#5cffb1">
+        <div class="port-head"><span class="port-id">P</span><div><h3>Put to other use</h3><p>Same gateway, new job.</p></div><span class="led"></span></div>
+        <div class="jackline"></div>
+        <ul class="patches">
+          <li><span class="patch-no">01</span><p>Gateway as an evaluation harness — replay prod traffic against candidate models.</p></li>
+          <li><span class="patch-no">02</span><p>Use gateway logs as a fine-tuning/distillation dataset pipeline with consent and PII controls.</p></li>
+          <li><span class="patch-no">03</span><p>Gateway as a compliance choke point for data residency and PII redaction.</p></li>
+          <li><span class="patch-no">04</span><p>Expose gateway metrics to FinOps for forecasting and budget alerts.</p></li>
+          <li><span class="patch-no">05</span><p>Developer sandbox mode with mock models and recorded fixtures for testing.</p></li>
+        </ul>
+      </article>
+      <article class="port corner" style="--c:#ff6ad5;--edge:#ff6ad5">
+        <div class="port-head"><span class="port-id">E</span><div><h3>Eliminate</h3><p>Delete the failure mode.</p></div><span class="led"></span></div>
+        <div class="jackline"></div>
+        <ul class="patches">
+          <li><span class="patch-no">01</span><p>Remove vendor lock-in by enforcing a provider-agnostic internal contract.</p></li>
+          <li><span class="patch-no">02</span><p>Eliminate secret sprawl by centralizing provider credentials in a secrets vault integration.</p></li>
+          <li><span class="patch-no">03</span><p>Strip PII and secrets from prompts and logs via configurable redaction policies.</p></li>
+          <li><span class="patch-no">04</span><p>Remove manual incident toil with auto-failover and health-based provider ejection.</p></li>
+          <li><span class="patch-no">05</span><p>Eliminate surprise bills with hard spend caps, budget thresholds, and kill switches.</p></li>
+        </ul>
+      </article>
+      <article class="port corner" style="--c:#ff6b7d;--edge:#ff6b7d">
+        <div class="port-head"><span class="port-id">R</span><div><h3>Reverse</h3><p>Flip direction or trust.</p></div><span class="led"></span></div>
+        <div class="jackline"></div>
+        <ul class="patches">
+          <li><span class="patch-no">01</span><p>Invert client-pull to gateway-push callbacks/webhooks for long-running or async jobs.</p></li>
+          <li><span class="patch-no">02</span><p>Instead of apps choosing models, gateway auto-selects cheapest/fastest model meeting the SLO.</p></li>
+          <li><span class="patch-no">03</span><p>Reverse the trust boundary — treat model outputs as untrusted; validate and guardrail before returning.</p></li>
+          <li><span class="patch-no">04</span><p>Shift observability from app-side instrumentation to gateway-native tracing and metrics.</p></li>
+        </ul>
+      </article>
+    </div>
+    <div class="scamper-read"><span class="tag">EMERGENT READOUT</span><p>SCAMPER surfaced the core pillars: <b>abstraction · resilience · governance · cost control · safety · eval/FinOps reuse</b>.</p></div>
+  </section>
+
+  <section id="lens02" class="reveal">
+    <div class="lens-head">
+      <div class="lens-num">02</div>
+      <div><div class="eyebrow mag">Divergent lens / foreign DNA</div><h2>Cross-Pollination</h2><p>Ten disciplines from outside software infrastructure donate one mechanism each. Hover a donor to inject its signal into the reactor at the center — the gateway absorbs the graft.</p></div>
+      <div class="meta">10 DONORS<br><b>10 GRAFTS</b><br>REACTOR LIVE</div>
+    </div>
+    <div class="graftlab" id="graftLab">
+      <div class="donors">
+        <button class="donor" type="button" data-domain="CDNs"><span class="donor-id">DONOR 01</span><span class="donor-name">CDNs</span><span class="donor-idea">Edge caching of deterministic prompts/responses with TTL and cache keys by model + params + hash.</span></button>
+        <button class="donor" type="button" data-domain="Airlines"><span class="donor-id">DONOR 02</span><span class="donor-name">Airlines</span><span class="donor-idea">Overbooking/concurrency queues with priority boarding (tiers) and graceful 429 shed.</span></button>
+        <button class="donor" type="button" data-domain="Banking"><span class="donor-id">DONOR 03</span><span class="donor-name">Banking</span><span class="donor-idea">Double-entry style usage ledger for auditable token/cost accounting and chargeback.</span></button>
+        <button class="donor" type="button" data-domain="Hospitals / triage"><span class="donor-id">DONOR 04</span><span class="donor-name">Hospitals / triage</span><span class="donor-idea">Request prioritization by SLA/criticality and degraded-mode routing.</span></button>
+        <button class="donor" type="button" data-domain="Telecom"><span class="donor-id">DONOR 05</span><span class="donor-name">Telecom</span><span class="donor-idea">QoS classes — latency-optimized vs cost-optimized vs quality-optimized lanes.</span></button>
+        <button class="donor" type="button" data-domain="Casinos / fraud"><span class="donor-id">DONOR 06</span><span class="donor-name">Casinos / fraud</span><span class="donor-idea">Anomaly detection on spend spikes, prompt abuse, or exfiltration patterns.</span></button>
+        <button class="donor" type="button" data-domain="Supply chain"><span class="donor-id">DONOR 07</span><span class="donor-name">Supply chain</span><span class="donor-idea">Multi-vendor sourcing strategy and automatic provider diversification.</span></button>
+        <button class="donor" type="button" data-domain="Package delivery"><span class="donor-id">DONOR 08</span><span class="donor-name">Package delivery</span><span class="donor-idea">Request tracing with tracking IDs across retries, fallbacks, and tools.</span></button>
+        <button class="donor" type="button" data-domain="Kubernetes"><span class="donor-id">DONOR 09</span><span class="donor-name">Kubernetes</span><span class="donor-idea">Declarative desired-state config, health probes, and self-healing reconciliation.</span></button>
+        <button class="donor" type="button" data-domain="Search engines"><span class="donor-id">DONOR 10</span><span class="donor-name">Search engines</span><span class="donor-idea">Query rewriting/prompt optimization hints and result ranking for RAG outputs.</span></button>
+      </div>
+      <div class="reactor">
+        <svg class="graft-svg" id="graftSvg" aria-hidden="true"></svg>
+        <div class="corehex" id="graftCore">
+          <svg viewBox="0 0 200 200" fill="none" aria-hidden="true"><circle cx="100" cy="100" r="96" stroke="rgba(255,106,213,.35)" stroke-dasharray="3 9"/><circle cx="100" cy="100" r="78" stroke="rgba(77,226,255,.3)" stroke-dasharray="18 8"/></svg>
+          <svg class="inner" viewBox="0 0 200 200" fill="none" aria-hidden="true"><path d="M100 8 180 54v92l-80 46-80-46V54L100 8Z" stroke="rgba(167,139,250,.45)"/><circle cx="100" cy="100" r="52" stroke="rgba(92,255,177,.35)"/></svg>
+          <div class="co"><b>GRAFT<br>CORE</b><span>FOREIGN SIGNAL INTAKE</span></div>
+        </div>
+        <div class="core-readout default" id="coreReadout"><b>REACTOR / IDLE</b><span>Awaiting donor signal — hover any discipline to inject its mechanism.</span></div>
+        <div class="reactor-hint">10 DONORS · 1 GATEWAY · 0 IMMUNITY</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="lens03" class="reveal">
+    <div class="lens-head">
+      <div class="lens-num">03</div>
+      <div><div class="eyebrow red">Adversarial lens / fault injection</div><h2>Failure Analysis</h2><p>Eleven ways the gateway could break, each wired to the guard that catches it. Click a blade to arm its countermeasure, or run the full chaos drill and watch defense coverage climb.</p></div>
+      <div class="meta">11 FAULTS<br><b>11 GUARDS</b><br>BENCH ARMED</div>
+    </div>
+    <div class="bench corner">
+      <div class="bench-controls">
+        <div class="coverage"><span>DEFENSE COVERAGE</span><div class="meter"><i id="coverageFill"></i></div><b id="coverageVal">0%</b></div>
+        <button class="chaos-btn" id="chaosBtn" type="button">◉ RUN FULL CHAOS DRILL</button>
+      </div>
+      <div class="rack" id="rack">
+        <article class="blade"><div class="fault"><span class="fault-no">F-01</span><h4>PROVIDER OUTAGE</h4><p>A model provider disappears mid-traffic.</p></div><div class="arrow">→</div><div class="guard"><h4>GUARD</h4><p>Automatic failover to secondary provider/model with policy-based equivalence mapping.</p></div><span class="blade-led"></span></article>
+        <article class="blade"><div class="fault"><span class="fault-no">F-02</span><h4>PROVIDER THROTTLING</h4><p>429s and quota walls under load.</p></div><div class="arrow">→</div><div class="guard"><h4>GUARD</h4><p>Adaptive backoff, token bucket smoothing, and request queuing.</p></div><span class="blade-led"></span></article>
+        <article class="blade"><div class="fault"><span class="fault-no">F-03</span><h4>LATENCY SPIKES</h4><p>Tail latency ruins the experience.</p></div><div class="arrow">→</div><div class="guard"><h4>GUARD</h4><p>Streaming-first responses, timeouts, hedged requests, and fast-model fallback.</p></div><span class="blade-led"></span></article>
+        <article class="blade"><div class="fault"><span class="fault-no">F-04</span><h4>COST RUNAWAY</h4><p>A loop quietly burns the budget.</p></div><div class="arrow">→</div><div class="guard"><h4>GUARD</h4><p>Per-request cost estimation, budget enforcement, and anomaly kill switches.</p></div><span class="blade-led"></span></article>
+        <article class="blade"><div class="fault"><span class="fault-no">F-05</span><h4>PROMPT INJECTION / EXFIL</h4><p>Untrusted text tries to escape the sandbox.</p></div><div class="arrow">→</div><div class="guard"><h4>GUARD</h4><p>Input/output guardrails, tool sandboxing, and allow/deny policies.</p></div><span class="blade-led"></span></article>
+        <article class="blade"><div class="fault"><span class="fault-no">F-06</span><h4>CONTEXT OVERFLOW</h4><p>History exceeds the model window.</p></div><div class="arrow">→</div><div class="guard"><h4>GUARD</h4><p>Automatic truncation, summarization, or map-reduce chunking strategies.</p></div><span class="blade-led"></span></article>
+        <article class="blade"><div class="fault"><span class="fault-no">F-07</span><h4>BAD / NON-DETERMINISTIC OUTPUT</h4><p>The answer is malformed or wrong.</p></div><div class="arrow">→</div><div class="guard"><h4>GUARD</h4><p>Schema validation, self-check/repair retries, and verifier models.</p></div><span class="blade-led"></span></article>
+        <article class="blade"><div class="fault"><span class="fault-no">F-08</span><h4>KEY / SECRET LEAK</h4><p>Credentials end up in code or logs.</p></div><div class="arrow">→</div><div class="guard"><h4>GUARD</h4><p>Vault-backed secrets, rotation, scoped virtual keys, and no-secret logging.</p></div><span class="blade-led"></span></article>
+        <article class="blade"><div class="fault"><span class="fault-no">F-09</span><h4>COMPLIANCE BREACH</h4><p>Data crosses a boundary it shouldn't.</p></div><div class="arrow">→</div><div class="guard"><h4>GUARD</h4><p>Data residency routing, retention controls, PII redaction, and audit trails.</p></div><span class="blade-led"></span></article>
+        <article class="blade"><div class="fault"><span class="fault-no">F-10</span><h4>DEBUGGABILITY FAILURE</h4><p>No one can reconstruct what happened.</p></div><div class="arrow">→</div><div class="guard"><h4>GUARD</h4><p>End-to-end tracing (OpenTelemetry), prompt/response replay, and diffing.</p></div><span class="blade-led"></span></article>
+        <article class="blade"><div class="fault"><span class="fault-no">F-11</span><h4>NOISY NEIGHBOR</h4><p>One tenant starves the rest.</p></div><div class="arrow">→</div><div class="guard"><h4>GUARD</h4><p>Tenant isolation, fair scheduling, and per-tenant quotas/budgets.</p></div><span class="blade-led"></span></article>
+      </div>
+      <div class="bench-foot">CHAOS BENCH // FAULT → COUNTERMEASURE // CLICK ANY BLADE TO ENGAGE ITS GUARD</div>
+    </div>
+  </section>
+
+  <section id="lens04" class="reveal">
+    <div class="lens-head">
+      <div class="lens-num">04</div>
+      <div><div class="eyebrow amber">Temporal lens / horizon scan</div><h2>Scenario Cross <span style="color:var(--dim);font-size:.5em;font-family:var(--mono);font-weight:500">/ speculative_future</span></h2><p>Project the gateway forward, then sideways. Three planning horizons anchor the road; the far edge forks into a cheap-inference world, a dystopia risk case, and a utopia case.</p></div>
+      <div class="meta">3 HORIZONS<br><b>3 FUTURES</b><br>SCAN ACTIVE</div>
+    </div>
+    <svg class="horizon-svg" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true">
+      <path class="trackline" d="M40 60 H860"/>
+      <path class="pulse" d="M40 60 H860"/>
+      <path class="trackline" d="M860 60 C940 60 950 20 1030 20 H1160"/>
+      <path class="trackline" d="M860 60 H1160"/>
+      <path class="trackline" d="M860 60 C940 60 950 100 1030 100 H1160"/>
+      <g fill="#ffc260">
+        <circle cx="180" cy="60" r="5"/><circle cx="470" cy="60" r="5"/><circle cx="750" cy="60" r="5"/><circle cx="860" cy="60" r="7"/>
+      </g>
+      <g fill="none" stroke="#ffc260" stroke-width="1"><circle cx="180" cy="60" r="11" opacity=".4"/><circle cx="470" cy="60" r="11" opacity=".4"/><circle cx="750" cy="60" r="11" opacity=".4"/></g>
+      <g font-family="ui-monospace,monospace" font-size="9" fill="#5c6d88" letter-spacing="1"><text x="40" y="24">NOW</text><text x="1090" y="14">FAR EDGE</text></g>
+    </svg>
+    <div class="stations">
+      <article class="station"><div class="yr">1 YEAR / FOUNDATION</div><ul>
+        <li>Core proxy, multi-provider routing, keys, quotas, logging, basic cost dashboard.</li>
+        <li>OpenAI-compatible endpoint plus adapters for Anthropic, Gemini, Azure, local inference.</li>
+      </ul></article>
+      <article class="station"><div class="yr">3 YEARS / AUTONOMY</div><ul>
+        <li>Autonomous model selection by task/cost/latency/quality with continuous eval feedback.</li>
+        <li>Policy-as-code for safety, compliance, and routing with versioning and approvals.</li>
+        <li>Semantic caching and shared embeddings cache across teams to cut spend dramatically.</li>
+      </ul></article>
+      <article class="station"><div class="yr">10 YEARS / MESH</div><ul>
+        <li>Agent-to-agent gateway mediating tool use, permissions, and inter-agent contracts.</li>
+        <li>Verifiable privacy — confidential computing/attestation and provable data handling.</li>
+      </ul></article>
+      <div class="fork">
+        <div class="future f1"><b>POST-SCARCITY INFERENCE</b><p>When inference is cheap, the gateway shifts focus from cost to quality, safety, and provenance.</p></div>
+        <div class="future f2"><b>DYSTOPIA RISK CASE</b><p>Deep auditability, watermark/provenance checks, and abuse-response playbooks.</p></div>
+        <div class="future f3"><b>UTOPIA CASE</b><p>Seamless global routing, zero-config developer experience, and self-optimizing SLOs.</p></div>
+      </div>
+    </div>
+    <div class="horizon-foot">HORIZON SCAN // FEATURES CLUSTER INTO: API COMPATIBILITY &amp; ROUTING · AUTH/TENANCY/QUOTAS · RELIABILITY/FAILOVER · COST/FINOPS · SAFETY/COMPLIANCE · OBSERVABILITY/EVALS · CACHING/PERF · DEVELOPER EXPERIENCE</div>
+  </section>
+
+  <section id="synthesis" class="reveal">
+    <div class="lens-head">
+      <div class="lens-num">05</div>
+      <div><div class="eyebrow green">Convergence / the design that survived</div><h2>Synthesis: Control Plane Online</h2><p>Everything from the four lenses converges on one gateway. Six load-bearing pillars orbit the core; the MVP sits at the center, the differentiators at the edge, and three tenets hold the whole structure up.</p></div>
+      <div class="meta">6 PILLARS<br><b>1 DESIGN</b><br>SYNTHESIS LOCKED</div>
+    </div>
+    <div class="feed"><span>INPUT <b>SCAMPER</b></span><span>INPUT <b>CROSS-POLLINATION</b></span><span>INPUT <b>FAILURE ANALYSIS</b></span><span>INPUT <b>SPECULATIVE FUTURE</b></span><span>→ <b>CORE</b></span></div>
+    <div class="constellation" id="constellation">
+      <svg class="pillar-svg" id="pillarSvg" aria-hidden="true"></svg>
+      <div class="core-node" id="coreNode">
+        <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
+        <div class="hexbg"></div><div class="hexline"></div>
+        <div class="ctext"><b>LLM<br>GATEWAY</b><span>CONTROL PLANE // ONLINE</span></div>
+      </div>
+      <article class="pillar p1"><span class="id">PILLAR 01</span><h3>Unified API &amp; routing</h3><p>OpenAI-compatible facade · hot-swappable adapters · policy-based routing and failover.</p></article>
+      <article class="pillar p2"><span class="id">PILLAR 02</span><h3>Auth / tenancy / quotas</h3><p>Virtual keys · RBAC · token-aware limits · budgets and chargeback.</p></article>
+      <article class="pillar p3"><span class="id">PILLAR 03</span><h3>Reliability &amp; performance</h3><p>Retries + backoff · circuit breakers · exact, prefix and semantic caching.</p></article>
+      <article class="pillar p4"><span class="id">PILLAR 04</span><h3>Observability / evals / FinOps</h3><p>OpenTelemetry tracing · replay harness · auditable cost ledger.</p></article>
+      <article class="pillar p5"><span class="id">PILLAR 05</span><h3>Safety / compliance / guardrails</h3><p>Redaction · schema validation · data-residency routing · audit trails.</p></article>
+      <article class="pillar p6"><span class="id">PILLAR 06</span><h3>Developer experience &amp; governance</h3><p>Config-as-code policies · sandbox mode · declarative rollout and approvals.</p></article>
+    </div>
+    <div class="spec">
+      <div class="spec-card corner s1"><h4>SHIP FIRST / MVP</h4><div class="chips">
+        <span class="chip">OpenAI-compatible proxy</span><span class="chip">Provider adapters</span><span class="chip">Virtual keys + quotas</span><span class="chip">Logging + cost metering</span><span class="chip">Basic failover</span>
+      </div></div>
+      <div class="spec-card corner s2"><h4>THE EDGE / DIFFERENTIATORS</h4><div class="chips">
+        <span class="chip">Policy-driven routing (cost / latency / quality)</span><span class="chip">Semantic caching</span><span class="chip">Schema-validated outputs</span><span class="chip">Eval / replay loop from prod traffic</span>
+      </div></div>
+      <div class="spec-card corner s3"><h4>LOAD-BEARING TENETS</h4><div class="chips">
+        <span class="chip">Provider-agnostic contract</span><span class="chip">Config-as-code policies</span><span class="chip">Gateway as trust boundary — inputs and outputs untrusted, with redaction + validation</span>
+      </div></div>
+    </div>
+    <div class="manifest"><h4>FEATURE MANIFEST / 8 CLUSTERS</h4><div class="chips">
+      <span class="chip">API compatibility &amp; routing</span><span class="chip">Auth / tenancy / quotas</span><span class="chip">Reliability / failover</span><span class="chip">Cost / FinOps</span><span class="chip">Safety / compliance</span><span class="chip">Observability / evals</span><span class="chip">Caching / performance</span><span class="chip">Developer experience</span>
+    </div></div>
+    <div class="scamper-read" style="margin-top:20px"><span class="tag">DEFER</span><p>Autonomous optimization, full eval harness, and advanced privacy attestation — later horizons, not the first ship.</p></div>
+  </section>
+
+</main>
+
+<footer>
+  <span>SESSION <b>CLOSED</b> · 65 IDEAS · 4 TECHNIQUES · 4 INSIGHTS · 2 DECISIONS</span>
+  <span>MODE: AUTONOMOUS · SOURCE: .memlog.md · ARTIFACT: brainstorm.html</span>
+  <span>ONE DOOR. <b>EVERY MODEL.</b></span>
+</footer>
+
+<script>
+(function(){
+  var revealObs=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');revealObs.unobserve(e.target);}})},{threshold:.1});
+  document.querySelectorAll('.reveal').forEach(function(el){revealObs.observe(el)});
+
+  var links=[].slice.call(document.querySelectorAll('.nav a'));
+  var secObs=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(a){a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id)});}})},{threshold:.3});
+  ['lens01','lens02','lens03','lens04','synthesis'].forEach(function(id){var s=document.getElementById(id);if(s)secObs.observe(s)});
+
+  var lab=document.getElementById('graftLab'),gsvg=document.getElementById('graftSvg'),readout=document.getElementById('coreReadout');
+  var donors=[].slice.call(document.querySelectorAll('.donor'));
+  var defaultReadout=readout.innerHTML;
+  function drawGrafts(){
+    if(!lab||!gsvg)return;
+    var lr=lab.getBoundingClientRect(),core=document.getElementById('graftCore').getBoundingClientRect();
+    var cx=core.left+core.width/2-lr.left,cy=core.top+core.height/2-lr.top;
+    gsvg.setAttribute('viewBox','0 0 '+lr.width+' '+lr.height);
+    gsvg.innerHTML=donors.map(function(d,i){
+      var b=d.getBoundingClientRect(),x=b.right-lr.left,y=b.top+b.height/2-lr.top,mx=x+(cx-x)*.48;
+      return '<path data-i="'+i+'" d="M'+x+' '+y+' C'+mx+' '+y+','+mx+' '+cy+','+cx+' '+cy+'"/>';
+    }).join('');
+  }
+  function activate(i){
+    donors.forEach(function(d,j){d.classList.toggle('hot',i===j)});
+    [].slice.call(gsvg.querySelectorAll('path')).forEach(function(p,j){p.classList.toggle('hot',i===j)});
+    var d=donors[i];
+    readout.classList.remove('default');
+    readout.innerHTML='<b>DONOR INJECTED / '+d.dataset.domain.toUpperCase()+'</b><span>'+d.querySelector('.donor-idea').textContent+'</span>';
+  }
+  function deactivate(){donors.forEach(function(d){d.classList.remove('hot')});[].slice.call(gsvg.querySelectorAll('path')).forEach(function(p){p.classList.remove('hot')});readout.classList.add('default');readout.innerHTML=defaultReadout;}
+  donors.forEach(function(d,i){
+    d.addEventListener('mouseenter',function(){activate(i)});
+    d.addEventListener('focus',function(){activate(i)});
+    d.addEventListener('mouseleave',deactivate);
+    d.addEventListener('blur',deactivate);
+  });
+
+  var blades=[].slice.call(document.querySelectorAll('.blade'));
+  var fill=document.getElementById('coverageFill'),val=document.getElementById('coverageVal'),rack=document.getElementById('rack'),btn=document.getElementById('chaosBtn');
+  function coverage(){var n=blades.filter(function(b){return b.classList.contains('mitigated')}).length,pct=Math.round(n/blades.length*100);fill.style.width=pct+'%';val.textContent=pct+'%';}
+  blades.forEach(function(b){b.addEventListener('click',function(){b.classList.toggle('mitigated');coverage()})});
+  btn.addEventListener('click',function(){
+    btn.disabled=true;rack.classList.add('drilling');
+    blades.forEach(function(b,i){setTimeout(function(){b.classList.add('mitigated');coverage()},i*90)});
+    setTimeout(function(){rack.classList.remove('drilling');btn.disabled=false},blades.length*90+520);
+  });
+
+  var stage=document.getElementById('constellation'),psvg=document.getElementById('pillarSvg'),core=document.getElementById('coreNode');
+  var pillars=[].slice.call(document.querySelectorAll('.pillar'));
+  function drawPillars(){
+    if(!stage||!psvg||window.innerWidth<=900)return;
+    var sr=stage.getBoundingClientRect(),cr=core.getBoundingClientRect();
+    var cx=cr.left+cr.width/2-sr.left,cy=cr.top+cr.height/2-sr.top;
+    psvg.setAttribute('viewBox','0 0 '+sr.width+' '+sr.height);
+    psvg.innerHTML=pillars.map(function(p,i){
+      var b=p.getBoundingClientRect(),x=b.left+b.width/2-sr.left,y=b.top+b.height/2-sr.top;
+      var dx=x-cx,dy=y-cy,ex=cx+dx*.77,ey=cy+dy*.77;
+      return '<path data-i="'+i+'" d="M'+cx+' '+cy+' L'+ex+' '+ey+'"/>';
+    }).join('');
+  }
+  var synObs=new IntersectionObserver(function(es){if(es[0].isIntersecting){document.getElementById('synthesis').classList.add('online');synObs.disconnect();}},{threshold:.12});
+  synObs.observe(document.getElementById('synthesis'));
+
+  function render(){drawGrafts();drawPillars();}
+  window.addEventListener('load',render);
+  window.addEventListener('resize',function(){clearTimeout(window.__rt);window.__rt=setTimeout(render,140)});
+  render();
+})();
+</script>
+</body>
+</html>
