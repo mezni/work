@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LLM Engineering Toolbox — Brainstorm Keepsake</title>
+<style>
+:root {
+  --bg: #14171b;
+  --bg-alt: #1b2026;
+  --panel: #1e232b;
+  --panel-2: #232a33;
+  --paper: #f3efe3;
+  --paper-ink: #2b261d;
+  --ink: #e8e6df;
+  --muted: #a8b0bc;
+  --line: #344050;
+  --amber: #d9a441;
+  --amber-dim: #8a6928;
+  --copper: #c7773d;
+  --green: #6fd38a;
+  --cyan: #6bc7d6;
+  --red: #e06a5f;
+  --blue: #6aa8ff;
+  --violet: #b08cff;
+  --shadow: rgba(0,0,0,.35);
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --sans: "Avenir Next", Avenir, "Segoe UI", Helvetica, Arial, sans-serif;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--sans);
+  line-height: 1.5;
+  background:
+    linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px),
+    radial-gradient(circle at 15% 0%, #223042 0%, transparent 35%),
+    radial-gradient(circle at 85% 10%, #2a2433 0%, transparent 30%),
+    var(--bg);
+  background-size: 24px 24px, 24px 24px, auto, auto, auto;
+}
+a { color: var(--cyan); }
+.wrap { max-width: 1280px; margin: 0 auto; padding: 1.25rem; }
+h1, h2, h3, h4 { line-height: 1.15; margin: 0 0 .5rem; }
+h1 { font-size: clamp(1.8rem, 4vw, 3rem); letter-spacing: .02em; }
+h2 { font-size: clamp(1.35rem, 2.4vw, 2rem); }
+h3 { font-size: 1.05rem; }
+p { margin: .4rem 0 .8rem; }
+.muted { color: var(--muted); }
+.mono { font-family: var(--mono); }
+.tag {
+  display: inline-block;
+  font: 700 .68rem/1 var(--mono);
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  padding: .28rem .45rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--cyan);
+  background: rgba(107,199,214,.08);
+  white-space: nowrap;
+}
+.panel {
+  background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0)), var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px var(--shadow), inset 0 1px 0 rgba(255,255,255,.04);
+  padding: 1rem;
+  position: relative;
+}
+.panel::before, .panel::after {
+  content: "";
+  position: absolute;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #6b7480, #2a313a);
+  box-shadow: inset 0 0 0 1px #111;
+  top: 10px;
+}
+.panel::before { left: 10px; }
+.panel::after { right: 10px; }
+.plate {
+  border: 1px solid #5a4a28;
+  background:
+    linear-gradient(180deg, rgba(255,233,170,.08), rgba(0,0,0,.08)),
+    repeating-linear-gradient(90deg, transparent, transparent 6px, rgba(0,0,0,.08) 6px, rgba(0,0,0,.08) 7px),
+    #252018;
+  border-radius: 16px;
+  padding: 1.2rem 1.2rem 1rem;
+  box-shadow: inset 0 0 0 1px rgba(255,214,130,.08), 0 12px 30px var(--shadow);
+}
+header.hero { margin: 1rem 0 1.5rem; }
+.hero-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; align-items: stretch; }
+.kicker { color: var(--amber); font: 700 .8rem/1.2 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+.meta { display: grid; gap: .5rem; font-family: var(--mono); font-size: .85rem; }
+.meta div { border-left: 3px solid var(--amber-dim); padding-left: .6rem; }
+.meta strong { color: var(--amber); font-weight: 700; }
+section { margin: 1.6rem 0; }
+.section-title { display: flex; align-items: center; gap: .7rem; margin-bottom: .8rem; }
+.section-title .led {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--green); box-shadow: 0 0 10px rgba(111,211,138,.7);
+}
+.spotlight-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+.spot {
+  border: 1px solid var(--amber-dim);
+  background: linear-gradient(180deg, rgba(217,164,65,.12), rgba(217,164,65,.02)), var(--panel);
+}
+.spot h3 { color: var(--amber); font-family: var(--mono); font-size: .95rem; }
+.spot .badge { color: #111; background: var(--amber); border-color: var(--amber); margin-bottom: .5rem; }
+
+.techniques { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+.tech { padding-top: 1.2rem; }
+.tech-head { display: grid; grid-template-columns: 1fr auto; gap: .5rem; align-items: start; margin-bottom: .5rem; }
+.tech h3 { font-size: 1.15rem; }
+.viz {
+  border: 1px dashed #465468;
+  border-radius: 10px;
+  background: rgba(255,255,255,.02);
+  padding: .6rem;
+  margin: .5rem 0 .7rem;
+  min-height: 88px;
+}
+.ideas { list-style: none; padding: 0; margin: 0; display: grid; gap: .45rem; }
+.ideas li {
+  display: grid; grid-template-columns: auto 1fr; gap: .45rem; align-items: start;
+  padding: .45rem .5rem; border: 1px solid #2d3642; border-radius: 8px; background: rgba(255,255,255,.015);
+}
+.ideas .itag { font: 700 .62rem/1.2 var(--mono); color: var(--muted); border: 1px solid #3a4654; padding: .2rem .35rem; border-radius: 4px; text-transform: uppercase; letter-spacing: .04em; margin-top: .08rem; }
+.ideas span { font-size: .93rem; }
+
+.climax { border: 1px solid #4a5b44; background: linear-gradient(180deg, rgba(111,211,138,.08), rgba(0,0,0,0)), #171d19; }
+.climax-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 1rem; }
+.cluster-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .6rem; }
+.cluster {
+  border: 1px solid #355040; border-radius: 10px; padding: .6rem; background: rgba(255,255,255,.02);
+}
+.cluster h4 { font-family: var(--mono); color: var(--green); font-size: .9rem; }
+.cluster .cid { display: inline-block; min-width: 1.4rem; text-align: center; margin-right: .3rem; color: #111; background: var(--green); border-radius: 4px; font-weight: 700; }
+.throughline {
+  font-family: var(--serif); font-size: 1.08rem; color: #f2efe6;
+  border-left: 4px solid var(--amber); padding: .6rem .8rem; background: rgba(217,164,65,.08); border-radius: 0 8px 8px 0;
+}
+.moscow { display: grid; grid-template-columns: repeat(2, 1fr); gap: .7rem; }
+.mbox { border-radius: 10px; padding: .7rem; border: 1px solid var(--line); background: rgba(0,0,0,.12); }
+.mbox h4 { font-family: var(--mono); font-size: .9rem; margin-bottom: .35rem; }
+.must { border-color: #4f6b3d; } .must h4 { color: #9fe870; }
+.should { border-color: #3d5f6b; } .should h4 { color: #8fd8e8; }
+.could { border-color: #5e4e6b; } .could h4 { color: #d0b0ff; }
+.wont { border-color: #6b4743; } .wont h4 { color: #ffb0a8; }
+.mbox ul { margin: 0; padding-left: 1.1rem; }
+.mbox li { margin: .25rem 0; font-size: .92rem; }
+.insights { display: grid; gap: .6rem; }
+.insight { padding: .65rem .7rem; border: 1px solid #3f4a3a; border-radius: 10px; background: rgba(255,255,255,.02); }
+.insight strong { color: var(--amber); font-family: var(--mono); font-size: .82rem; }
+.direction { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; margin-top: .7rem; }
+.dirbox { border: 1px solid #465468; border-radius: 10px; padding: .7rem; background: rgba(255,255,255,.02); }
+.dirbox h4 { color: var(--cyan); font-family: var(--mono); font-size: .9rem; }
+.dirbox ol, .dirbox p { margin: .2rem 0 0; }
+.dirbox ol { padding-left: 1.2rem; }
+
+footer { margin: 2rem 0 1rem; color: var(--muted); font-size: .85rem; text-align: center; font-family: var(--mono); }
+
+/* Visualizations */
+.v-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: .35rem; }
+.ticket { background: #efe7c8; color: #2d2718; font: 700 .62rem/1.2 var(--mono); padding: .35rem; border-radius: 3px; box-shadow: 0 2px 0 #c7b98a; transform: rotate(-1deg); }
+.ticket:nth-child(2n){ transform: rotate(1deg); background:#f5efd8; }
+.v-stack { display: grid; gap: .25rem; }
+.layer { text-align: center; font: 700 .7rem/1 var(--mono); color: #111; padding: .35rem; border-radius: 4px; background: linear-gradient(180deg,#d8c7a0,#a98f61); border: 1px solid #7a6540; }
+.layer:nth-child(2){ margin: 0 .6rem; } .layer:nth-child(3){ margin: 0 1.2rem; } .layer:nth-child(4){ margin: 0 1.8rem; }
+.v-bridge svg, .v-web svg, .v-scale svg { width: 100%; height: 70px; display: block; }
+.v-gears { display: flex; gap: .35rem; justify-content: space-between; align-items: center; }
+.gear { width: 34px; height: 34px; border-radius: 50%; border: 2px dashed var(--amber); display: grid; place-items: center; font: 700 .7rem/1 var(--mono); color: var(--amber); background: rgba(217,164,65,.08); }
+.v-mirror { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; font: .7rem/1.3 var(--mono); }
+.mirror-half { padding: .4rem; border-radius: 6px; border: 1px solid #465468; }
+.mirror-half.bad { background: rgba(224,106,95,.08); color: #f0b0aa; }
+.mirror-half.good { background: rgba(111,211,138,.08); color: #b8eac6; }
+.v-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .25rem; font: .62rem/1.2 var(--mono); }
+.cell { padding: .3rem; text-align: center; border: 1px solid #3b4858; border-radius: 4px; background: #202833; color: var(--muted); }
+.cell.h { background: #2a3645; color: var(--cyan); font-weight: 700; }
+.v-vise { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: .3rem; font: .7rem/1 var(--mono); }
+.jaw { height: 26px; border: 1px solid #6b7480; background: linear-gradient(180deg,#596473,#394452); border-radius: 4px; }
+.plate-mid { padding: .35rem .5rem; border: 1px solid var(--amber-dim); color: var(--amber); border-radius: 4px; background: rgba(217,164,65,.1); white-space: nowrap; }
+.v-strip { display: grid; grid-template-columns: repeat(6, 1fr); gap: .25rem; }
+.persona { text-align: center; font: .58rem/1.2 var(--mono); color: var(--muted); border: 1px solid #3b4858; border-radius: 999px; padding: .3rem .2rem; background: #202833; }
+.v-shelf { display: grid; grid-template-columns: repeat(4, 1fr); gap: .3rem; align-items: end; }
+.artifact { border: 1px solid #51606f; border-radius: 4px 4px 0 0; padding: .35rem .2rem; text-align: center; font: .6rem/1.2 var(--mono); background: linear-gradient(180deg,#2b3542,#202833); color: #cfd8e3; min-height: 42px; display: grid; place-items: center; }
+.shelf-board { grid-column: 1 / -1; height: 6px; background: linear-gradient(180deg,#8a6928,#5a4318); border-radius: 3px; }
+
+@media (max-width: 980px) {
+  .hero-grid, .techniques, .climax-grid, .direction { grid-template-columns: 1fr; }
+  .spotlight-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 700px) {
+  .wrap { padding: .75rem; }
+  .moscow, .cluster-grid { grid-template-columns: 1fr; }
+  .v-board { grid-template-columns: repeat(2, 1fr); }
+  .v-strip { grid-template-columns: repeat(3, 1fr); }
+  .panel { padding: .85rem; }
+}
+@media print {
+  :root { --ink: #111; --muted: #333; --line: #bbb; --panel: #fff; --bg: #fff; }
+  body { background: #fff; color: #111; }
+  .panel, .plate, .climax, .spot { box-shadow: none; background: #fff; color: #111; }
+  .panel::before, .panel::after { display: none; }
+  .tag { color: #111; border-color: #777; background: #f2f2f2; }
+  .throughline { color: #111; }
+  .tech { break-inside: avoid; }
+  section, .spot, .insight, .dirbox { break-inside: avoid; }
+  a { color: #111; text-decoration: none; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero plate">
+    <div class="kicker">Brainstorm Keepsake · Autonomous Session · Complete</div>
+    <div class="hero-grid">
+      <div>
+        <h1>LLM Engineering Toolbox</h1>
+        <p class="muted" style="font-size:1.05rem">Design and build — an engineer's workbench crossed with a lab notebook. A record of 132 ideas, 11 techniques, and the decisions that turn exploration into an evidence machine.</p>
+        <p><span class="tag">Topic</span> <span class="mono">LLM engineering toolbox: design and build</span></p>
+        <p><span class="tag">Goal</span> Identify and define features for an LLM engineering toolbox</p>
+      </div>
+      <div class="meta panel">
+        <div><strong>Mode</strong><br>autonomous</div>
+        <div><strong>Status</strong><br>complete</div>
+        <div><strong>Updated</strong><br>2026-11-20T18:13</div>
+        <div><strong>Source</strong><br>.memlog.md (sole source, traceable)</div>
+      </div>
+    </div>
+  </header>
+
+  <section aria-labelledby="winners-title">
+    <div class="section-title"><span class="led"></span><h2 id="winners-title">Buried Winners &amp; Signals</h2></div>
+    <div class="spotlight-grid">
+      <article class="panel spot">
+        <span class="tag badge">Buried winner · Constraint-derived</span>
+        <h3>The 60-minute CLI</h3>
+        <p>A CLI that scores a CSV of cases and diffs against a baseline — plus one-line call logging and experiment cards as diffable files. These make the whole toolbox testable before any UI exists.</p>
+        <p class="mono muted">Trace: ideas 93–95, 51; insight line 158</p>
+      </article>
+      <article class="panel spot">
+        <span class="tag badge">Odd idea that matters most</span>
+        <h3>Red-team agent beating the evaluator</h3>
+        <p>A red-team agent whose only job is finding prompts that beat the evaluator — turning evals from a static score into an adversarial loop that stays honest.</p>
+        <p class="mono muted">Trace: idea 112; insight line 159</p>
+      </article>
+      <article class="panel spot">
+        <span class="tag badge">Three ideas, one replayability core</span>
+        <h3>Flight recorder · Time-travel · One-click repro</h3>
+        <p>Flight recorder, time-travel debugging, and one-click repro all serve replayability — ship one trace format that powers all three.</p>
+        <p class="mono muted">Trace: ideas 44, 134, 60; insight line 160</p>
+      </article>
+    </div>
+  </section>
+
+  <section aria-labelledby="techniques-title">
+    <div class="section-title"><span class="led" style="background:var(--amber);box-shadow:0 0 10px rgba(217,164,65,.7)"></span><h2 id="techniques-title">Technique Instruments — All 132 Ideas</h2></div>
+    <div class="techniques">
+
+      <article class="panel tech" id="t-jtbd">
+        <div class="tech-head">
+          <div><span class="tag">Job to Be Done</span><h3>Job-to-be-done board</h3></div>
+          <div class="mono muted">12 ideas</div>
+        </div>
+        <div class="viz v-board" aria-label="Job tickets board">
+          <div class="ticket">spec before code</div><div class="ticket">repro from trace</div><div class="ticket">evidence &gt; vibes</div><div class="ticket">cheapest that clears</div>
+          <div class="ticket">catch regressions</div><div class="ticket">golden set, no PII</div><div class="ticket">explain the loop</div><div class="ticket">proto → prod</div>
+        </div>
+        <ul class="ideas">
+          <li><span class="itag">JTBD</span><span>Turn a vague product idea into a testable prompt spec before any code is written</span></li>
+          <li><span class="itag">JTBD</span><span>Reproduce a production failure locally from a single trace ID</span></li>
+          <li><span class="itag">JTBD</span><span>Answer 'did the new prompt actually get better?' with evidence, not vibes</span></li>
+          <li><span class="itag">JTBD</span><span>Find the cheapest model that clears the quality bar for one specific task</span></li>
+          <li><span class="itag">JTBD</span><span>Catch regressions on every commit, before users do</span></li>
+          <li><span class="itag">JTBD</span><span>Build a golden dataset from real traffic without leaking PII</span></li>
+          <li><span class="itag">JTBD</span><span>Explain to a PM why the agent looped 14 times</span></li>
+          <li><span class="itag">JTBD</span><span>Move from prototype to production without rewriting the whole pipeline</span></li>
+          <li><span class="itag">JTBD</span><span>Compare two RAG chunking strategies in an afternoon, not a sprint</span></li>
+          <li><span class="itag">JTBD</span><span>Prove safety behavior to an auditor with replayable evidence</span></li>
+          <li><span class="itag">JTBD</span><span>Onboard a new teammate to the prompt and eval system in under an hour</span></li>
+          <li><span class="itag">JTBD</span><span>Kill a feature fast when the data says it is not working</span></li>
+        </ul>
+      </article>
+
+      <article class="panel tech" id="t-first">
+        <div class="tech-head">
+          <div><span class="tag">First Principles Thinking</span><h3>Bedrock stack</h3></div>
+          <div class="mono muted">12 ideas</div>
+        </div>
+        <div class="viz v-stack" aria-label="Foundational layers">
+          <div class="layer">immutable build artifact</div>
+          <div class="layer">executable spec (eval)</div>
+          <div class="layer">measurable transactions</div>
+          <div class="layer">versioned source (digest)</div>
+        </div>
+        <ul class="ideas">
+          <li><span class="itag">FIRST</span><span>Treat every prompt as versioned source code with a digest, not a notebook string</span></li>
+          <li><span class="itag">FIRST</span><span>Treat every model call as a measurable transaction: input tokens, output tokens, latency, price</span></li>
+          <li><span class="itag">FIRST</span><span>Treat nondeterminism as a test input — sample N times and judge a distribution</span></li>
+          <li><span class="itag">FIRST</span><span>Treat context windows as a budget with an explicit allocator and receipts</span></li>
+          <li><span class="itag">FIRST</span><span>Treat the eval set as the executable specification of the product</span></li>
+          <li><span class="itag">FIRST</span><span>Treat retrieved context as untrusted input carrying provenance tags</span></li>
+          <li><span class="itag">FIRST</span><span>Treat tool calls as typed signatures with contracts, not free-text parsing</span></li>
+          <li><span class="itag">FIRST</span><span>Treat a conversation as a state machine with explicit transitions and invariants</span></li>
+          <li><span class="itag">FIRST</span><span>Treat model plus prompt plus params plus tools as one immutable build artifact</span></li>
+          <li><span class="itag">FIRST</span><span>Treat human review as scarce — route only uncertain cases to it</span></li>
+          <li><span class="itag">FIRST</span><span>Treat cost as a hard runtime constraint with a circuit breaker</span></li>
+          <li><span class="itag">FIRST</span><span>Treat every improvement claim as a hypothesis with an experiment ID</span></li>
+        </ul>
+      </article>
+
+      <article class="panel tech" id="t-analogy">
+        <div class="tech-head">
+          <div><span class="tag">Analogical Thinking</span><h3>Analogy bridges</h3></div>
+          <div class="mono muted">12 ideas</div>
+        </div>
+        <div class="viz v-bridge" aria-label="Analogy bridges">
+          <svg viewBox="0 0 400 70" preserveAspectRatio="none" role="img" aria-label="Bridges from familiar tools to prompt engineering">
+            <defs><linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#6bc7d6" stop-opacity=".2"/><stop offset="1" stop-color="#d9a441" stop-opacity=".2"/></linearGradient></defs>
+            <path d="M10,55 Q70,5 130,55" stroke="#6bc7d6" fill="none" stroke-width="2"/>
+            <path d="M140,55 Q200,5 260,55" stroke="#d9a441" fill="none" stroke-width="2"/>
+            <path d="M270,55 Q330,5 390,55" stroke="#6fd38a" fill="none" stroke-width="2"/>
+            <text x="70" y="35" text-anchor="middle" fill="#a8b0bc" font-size="10" font-family="monospace">git→prompts</text>
+            <text x="200" y="35" text-anchor="middle" fill="#a8b0bc" font-size="10" font-family="monospace">lab→experiments</text>
+            <text x="330" y="35" text-anchor="middle" fill="#a8b0bc" font-size="10" font-family="monospace">flight→traces</text>
+            <rect x="10" y="55" width="380" height="4" fill="url(#g1)" />
+          </svg>
+        </div>
+        <ul class="ideas">
+          <li><span class="itag">ANALOGY</span><span>Git for prompts: diff, blame, branch, revert, with semantic conflict detection</span></li>
+          <li><span class="itag">ANALOGY</span><span>Pytest for prompts: fixtures, parametrize, snapshot assertions</span></li>
+          <li><span class="itag">ANALOGY</span><span>Compiler for prompts: type-check variables and catch missing placeholders before runtime</span></li>
+          <li><span class="itag">ANALOGY</span><span>Electronic lab notebook: every experiment signed and timestamped with its reagents</span></li>
+          <li><span class="itag">ANALOGY</span><span>Wind tunnel: replay a fixed traffic corpus against builds under identical conditions</span></li>
+          <li><span class="itag">ANALOGY</span><span>Crash-test dummies: synthetic adversarial users that probe jailbreaks and loops</span></li>
+          <li><span class="itag">ANALOGY</span><span>Pharmacy recipe view of prompt plus retrieval plus tools with exact measures</span></li>
+          <li><span class="itag">ANALOGY</span><span>Oscilloscope for token streams: TTFT, latency, and token cadence live</span></li>
+          <li><span class="itag">ANALOGY</span><span>Flight recorder: last-1000-calls buffer that survives crashes</span></li>
+          <li><span class="itag">ANALOGY</span><span>CI/CD where the deploy gate is an eval score threshold</span></li>
+          <li><span class="itag">ANALOGY</span><span>Soil test for RAG: sample the corpus and report freshness, gaps, duplication</span></li>
+          <li><span class="itag">ANALOGY</span><span>Sketch-to-CAD: turn a rough natural-language intent into a structured prompt scaffold</span></li>
+        </ul>
+      </article>
+
+      <article class="panel tech" id="t-scamper">
+        <div class="tech-head">
+          <div><span class="tag">SCAMPER Method</span><h3>Seven-gear panel</h3></div>
+          <div class="mono muted">15 ideas</div>
+        </div>
+        <div class="viz v-gears" aria-label="SCAMPER gears">
+          <div class="gear">S</div><div class="gear">C</div><div class="gear">A</div><div class="gear">M</div><div class="gear">P</div><div class="gear">E</div><div class="gear">R</div>
+        </div>
+        <ul class="ideas">
+          <li><span class="itag">SCAMPER</span><span>Swap a paid model for a local one behind the same eval suite and see the delta</span></li>
+          <li><span class="itag">SCAMPER</span><span>Substitute handwritten few-shots with examples auto-mined from your own logs</span></li>
+          <li><span class="itag">SCAMPER</span><span>Bundle prompt, dataset, eval, and result into one shareable experiment card</span></li>
+          <li><span class="itag">SCAMPER</span><span>Combine tracing with cost attribution down to feature, tenant, and user</span></li>
+          <li><span class="itag">SCAMPER</span><span>Merge linter and evaluator: flag ambiguous instructions before they cost a run</span></li>
+          <li><span class="itag">SCAMPER</span><span>Adapt A/B frameworks to prompt variants with traffic splitting and guardrails</span></li>
+          <li><span class="itag">SCAMPER</span><span>Adapt database EXPLAIN plans to show why retrieval returned the wrong chunk</span></li>
+          <li><span class="itag">SCAMPER</span><span>Add a confidence plus abstain channel so the app can say 'I don't know' safely</span></li>
+          <li><span class="itag">SCAMPER</span><span>Parameterize prompts by locale and persona from a single source of truth</span></li>
+          <li><span class="itag">SCAMPER</span><span>Reuse production traces as a synthetic set for training a router or distilled model</span></li>
+          <li><span class="itag">SCAMPER</span><span>Reuse the eval harness as a load-test generator for capacity planning</span></li>
+          <li><span class="itag">SCAMPER</span><span>One-click issue bundles instead of manual copy-paste of logs into bug reports</span></li>
+          <li><span class="itag">SCAMPER</span><span>Pre-flight redactor that strips secrets from prompts before they leave the machine</span></li>
+          <li><span class="itag">SCAMPER</span><span>Delta debugging: reverse a failing output into the minimal input that still breaks it</span></li>
+          <li><span class="itag">SCAMPER</span><span>Backward eval: start from a bad answer and find the prompt token that caused it</span></li>
+        </ul>
+      </article>
+
+      <article class="panel tech" id="t-reverse">
+        <div class="tech-head">
+          <div><span class="tag">Reverse Brainstorming</span><h3>Inversion mirror</h3></div>
+          <div class="mono muted">13 ideas</div>
+        </div>
+        <div class="viz v-mirror" aria-label="Inversion mirror">
+          <div class="mirror-half bad">Failure modes<br>unpinned · hidden · loops · drift · silent · lost</div>
+          <div class="mirror-half good">Inversions<br>pin · ledger · budgets · checks · alarms · snapshots</div>
+        </div>
+        <ul class="ideas">
+          <li><span class="itag">REVERSE</span><span>Invert unpinned model aliases into model-version pinning with deprecation alerts</span></li>
+          <li><span class="itag">REVERSE</span><span>Invert hidden token usage into a per-call token ledger with anomaly alerts</span></li>
+          <li><span class="itag">REVERSE</span><span>Invert infinite agent loops into step and concurrency budgets with graceful degradation</span></li>
+          <li><span class="itag">REVERSE</span><span>Invert drifting embedding and text stores into a consistency checker</span></li>
+          <li><span class="itag">REVERSE</span><span>Invert the best prompt living in one head into a registry with owners and reviews</span></li>
+          <li><span class="itag">REVERSE</span><span>Invert raw model errors into a taxonomy with safe user-facing messages</span></li>
+          <li><span class="itag">REVERSE</span><span>Invert silent empty retrieval into empty-result alarms and a fallback policy</span></li>
+          <li><span class="itag">REVERSE</span><span>Invert six-hour evals into incremental runs that only rerun affected cases</span></li>
+          <li><span class="itag">REVERSE</span><span>Invert PII in prompts into a scanner at ingest and at call time</span></li>
+          <li><span class="itag">REVERSE</span><span>Invert the unlogged 4pm prompt change into one-click rollback tied to eval score</span></li>
+          <li><span class="itag">REVERSE</span><span>Invert cache-masked regressions into cache invalidation keyed by prompt digest</span></li>
+          <li><span class="itag">REVERSE</span><span>Invert unauditable reasoning into a structured step trace with tool I/O</span></li>
+          <li><span class="itag">REVERSE</span><span>Invert datasets lost with departing staff into snapshots stored beside the repo</span></li>
+        </ul>
+      </article>
+
+      <article class="panel tech" id="t-morph">
+        <div class="tech-head">
+          <div><span class="tag">Morphological Analysis</span><h3>Morphological grid</h3></div>
+          <div class="mono muted">12 ideas</div>
+        </div>
+        <div class="viz v-grid" aria-label="Morphological dimensions">
+          <div class="cell h">When</div><div class="cell h">Who judges</div><div class="cell h">What</div><div class="cell h">Where</div>
+          <div class="cell">Pre-flight</div><div class="cell">Rule</div><div class="cell">Prompt</div><div class="cell">CLI</div>
+          <div class="cell">Live</div><div class="cell">LLM judge</div><div class="cell">Session</div><div class="cell">UI</div>
+          <div class="cell">Post-hoc</div><div class="cell">Human/Hybrid</div><div class="cell">Workflow</div><div class="cell">API/DB/Git</div>
+        </div>
+        <ul class="ideas">
+          <li><span class="itag">MORPH</span><span>Pre-flight + rule + prompt + CLI: prompt lint as a pre-commit gate</span></li>
+          <li><span class="itag">MORPH</span><span>Live + LLM judge + session + UI: real-time conversation quality guard</span></li>
+          <li><span class="itag">MORPH</span><span>Post-hoc + human + workflow + API: async review queue with SLAs</span></li>
+          <li><span class="itag">MORPH</span><span>Pre-flight + hybrid + RAG + IDE: retrieval preview pane while authoring</span></li>
+          <li><span class="itag">MORPH</span><span>Live + rule + tool + API: tool-call schema validator middleware</span></li>
+          <li><span class="itag">MORPH</span><span>Post-hoc + LLM judge + call + DB: nightly score backfill and trend dashboard</span></li>
+          <li><span class="itag">MORPH</span><span>Pre-flight + human + agent + UI: approval checkpoint before autonomous actions</span></li>
+          <li><span class="itag">MORPH</span><span>Live + hybrid + session + CLI: streaming 'why did it do that' debug tail</span></li>
+          <li><span class="itag">MORPH</span><span>Post-hoc + rule + model + git: canary report auto-commented on the PR</span></li>
+          <li><span class="itag">MORPH</span><span>Pre-flight + LLM judge + dataset + IDE: synthetic test generator from the prompt</span></li>
+          <li><span class="itag">MORPH</span><span>Live + human + turn + UI: in-app 'flag this answer' feeding the eval queue</span></li>
+          <li><span class="itag">MORPH</span><span>Post-hoc + hybrid + workflow + blob: self-contained audit bundle per release</span></li>
+        </ul>
+      </article>
+
+      <article class="panel tech" id="t-constraint">
+        <div class="tech-head">
+          <div><span class="tag">Constraint Techniques</span><h3>Constraint vise</h3></div>
+          <div class="mono muted">11 ideas</div>
+        </div>
+        <div class="viz v-vise" aria-label="Constraint vise">
+          <div class="jaw"></div><div class="plate-mid">Ship in 60 min</div><div class="jaw"></div>
+        </div>
+        <ul class="ideas">
+          <li><span class="itag">CONSTRAINT</span><span>One Feature Only: the eval runner that answers better-or-worse, with everything else plugging into it</span></li>
+          <li><span class="itag">CONSTRAINT</span><span>Ship in 60 Minutes: a CLI that scores a CSV of cases and diffs against a baseline</span></li>
+          <li><span class="itag">CONSTRAINT</span><span>Ship in 60 Minutes: a JSON schema for experiment cards — no UI, just diffable files</span></li>
+          <li><span class="itag">CONSTRAINT</span><span>Ship in 60 Minutes: middleware logging prompt digest, model, tokens, latency on one line</span></li>
+          <li><span class="itag">CONSTRAINT</span><span>Kill the Crown Jewel: delete the fancy UI — library and CLI first</span></li>
+          <li><span class="itag">CONSTRAINT</span><span>Kill the Crown Jewel: delete LLM-as-judge — deterministic checks plus human review only</span></li>
+          <li><span class="itag">CONSTRAINT</span><span>Kill the Crown Jewel: delete the hosted service — run locally against your own keys</span></li>
+          <li><span class="itag">CONSTRAINT</span><span>$0 Mandate: build on git, pytest, and OpenTelemetry instead of new infrastructure</span></li>
+          <li><span class="itag">CONSTRAINT</span><span>Constraint Roulette no network: offline replay from recorded fixtures</span></li>
+          <li><span class="itag">CONSTRAINT</span><span>Constraint Roulette one engineer: a single binary with no services to operate</span></li>
+          <li><span class="itag">CONSTRAINT</span><span>Crank the Dial to 11: a 10,000-case eval in under a minute via parallel sampling and caching</span></li>
+        </ul>
+      </article>
+
+      <article class="panel tech" id="t-nature">
+        <div class="tech-head">
+          <div><span class="tag">Nature's Solutions / Swarm Logic / Predator and Prey</span><h3>Organism web</h3></div>
+          <div class="mono muted">11 ideas</div>
+        </div>
+        <div class="viz v-web" aria-label="Organism web">
+          <svg viewBox="0 0 400 70" preserveAspectRatio="none" role="img" aria-label="Interconnected nature-inspired agents">
+            <g stroke="#5f7f68" stroke-width="1">
+              <line x1="50" y1="35" x2="130" y2="15"/><line x1="50" y1="35" x2="130" y2="55"/>
+              <line x1="130" y1="15" x2="200" y2="35"/><line x1="130" y1="55" x2="200" y2="35"/>
+              <line x1="200" y1="35" x2="270" y2="15"/><line x1="200" y1="35" x2="270" y2="55"/>
+              <line x1="270" y1="15" x2="350" y2="35"/><line x1="270" y1="55" x2="350" y2="35"/>
+            </g>
+            <g fill="#6fd38a">
+              <circle cx="50" cy="35" r="6"/><circle cx="130" cy="15" r="5"/><circle cx="130" cy="55" r="5"/>
+              <circle cx="200" cy="35" r="7"/><circle cx="270" cy="15" r="5"/><circle cx="270" cy="55" r="5"/><circle cx="350" cy="35" r="6"/>
+            </g>
+            <text x="200" y="38" text-anchor="middle" fill="#111" font-size="8" font-family="monospace">loop</text>
+          </svg>
+        </div>
+        <ul class="ideas">
+          <li><span class="itag">NATURE</span><span>Ant colony: many cheap scout models explore; a strong solver handles only the hard residue</span></li>
+          <li><span class="itag">NATURE</span><span>Immune system: negative selection generates cases the system must not do, then patrols for them</span></li>
+          <li><span class="itag">NATURE</span><span>Mycelium: a shared context layer where agents leave breadcrumbs for the next agent</span></li>
+          <li><span class="itag">NATURE</span><span>Darwinian prompts: spawn variants, score them, breed winners, retire losers</span></li>
+          <li><span class="itag">NATURE</span><span>Antifragile: inject faults in staging so the pipeline learns to route around them</span></li>
+          <li><span class="itag">NATURE</span><span>Camouflage: watermark outputs so provenance survives copy-paste</span></li>
+          <li><span class="itag">NATURE</span><span>Symbiosis: a fast weak model paired with a slow verifier that wakes only on doubt</span></li>
+          <li><span class="itag">NATURE</span><span>Flocking: align agent workers with local rules, no central orchestrator</span></li>
+          <li><span class="itag">NATURE</span><span>Predator-prey: a red-team agent whose only job is finding prompts that beat the evaluator</span></li>
+          <li><span class="itag">NATURE</span><span>Metamorphosis: one artifact is a spec at design time, test at build time, monitor at runtime</span></li>
+          <li><span class="itag">NATURE</span><span>Ecosystem map: detect orphaned datasets and stale prompts by what consumes what</span></li>
+        </ul>
+      </article>
+
+      <article class="panel tech" id="t-empathy">
+        <div class="tech-head">
+          <div><span class="tag">Empathy Map / Persona Journey</span><h3>Persona strip</h3></div>
+          <div class="mono muted">12 ideas</div>
+        </div>
+        <div class="viz v-strip" aria-label="Persona strip">
+          <div class="persona">Prompt Eng</div><div class="persona">Eval Eng</div><div class="persona">Platform</div>
+          <div class="persona">PM</div><div class="persona">Domain</div><div class="persona">Support</div>
+          <div class="persona">Security</div><div class="persona">New hire</div><div class="persona">On-call</div>
+          <div class="persona">Finance</div><div class="persona">End user</div><div class="persona">Legal</div>
+        </div>
+        <ul class="ideas">
+          <li><span class="itag">PERSONA</span><span>Prompt engineer: scratchpad with side-by-side outputs from three prompt variants</span></li>
+          <li><span class="itag">PERSONA</span><span>Eval engineer: one command to regenerate the golden set from approved traces</span></li>
+          <li><span class="itag">PERSONA</span><span>Platform engineer: compatibility matrix of model versions against supported features</span></li>
+          <li><span class="itag">PERSONA</span><span>PM: plain-language scorecard — 92% of tasks pass, cost down 18%</span></li>
+          <li><span class="itag">PERSONA</span><span>Domain expert: review UI showing only cases where the model disagrees with them</span></li>
+          <li><span class="itag">PERSONA</span><span>Support lead: paste a customer complaint, get the exact trace and failing case</span></li>
+          <li><span class="itag">PERSONA</span><span>Security reviewer: evidence packet of jailbreak and red-team results per release</span></li>
+          <li><span class="itag">PERSONA</span><span>New hire: guided 'fix this failing case' tutorial on sanitized real data</span></li>
+          <li><span class="itag">PERSONA</span><span>On-call engineer: runbook auto-generated from the last incident's trace</span></li>
+          <li><span class="itag">PERSONA</span><span>Finance owner: forecast of spend per 1k tasks by candidate model</span></li>
+          <li><span class="itag">PERSONA</span><span>End user: visible confidence and sources affordance on every answer</span></li>
+          <li><span class="itag">PERSONA</span><span>Legal: data-lineage report showing which prompts and data touched which output</span></li>
+        </ul>
+      </article>
+
+      <article class="panel tech" id="t-future">
+        <div class="tech-head">
+          <div><span class="tag">Speculative Future</span><h3>Future artifact shelf</h3></div>
+          <div class="mono muted">11 ideas</div>
+        </div>
+        <div class="viz v-shelf" aria-label="Future artifacts on a shelf">
+          <div class="artifact">Model CV</div><div class="artifact">Prompt compiler</div><div class="artifact">Time-travel</div><div class="artifact">Cost autopilot</div>
+          <div class="shelf-board"></div>
+        </div>
+        <ul class="ideas">
+          <li><span class="itag">FUTURE</span><span>A model CV listing every model's measured strengths on your tasks, auto-refreshed</span></li>
+          <li><span class="itag">FUTURE</span><span>An LLM that writes your evals, then argues with you about the rubric</span></li>
+          <li><span class="itag">FUTURE</span><span>A prompt compiler that targets a model the way a C compiler targets a CPU</span></li>
+          <li><span class="itag">FUTURE</span><span>Self-healing prompts: on drift, propose a patch with before and after scores</span></li>
+          <li><span class="itag">FUTURE</span><span>A commons of anonymized eval cases, not prompts — a shared benchmark library</span></li>
+          <li><span class="itag">FUTURE</span><span>Time-travel debugging: scrub the timeline and see exact context at each step</span></li>
+          <li><span class="itag">FUTURE</span><span>Semantic diff: this prompt change shifted 7 cases to fail, and here is why</span></li>
+          <li><span class="itag">FUTURE</span><span>Cost autopilot routing each call to the cheapest model likely to pass</span></li>
+          <li><span class="itag">FUTURE</span><span>Model pension: auto-migrate off deprecated models with evidence of equivalence</span></li>
+          <li><span class="itag">FUTURE</span><span>An agent that files its own bug ticket when it detects a novel failure pattern</span></li>
+          <li><span class="itag">FUTURE</span><span>A toolbox for the toolbox: meta-eval scoring which tools actually improved outcomes</span></li>
+        </ul>
+      </article>
+
+      <article class="panel tech" id="t-triz">
+        <div class="tech-head">
+          <div><span class="tag">TRIZ Contradiction / Cursed Genie</span><h3>Tension scale</h3></div>
+          <div class="mono muted">11 ideas</div>
+        </div>
+        <div class="viz v-scale" aria-label="Tension scale">
+          <svg viewBox="0 0 400 70" preserveAspectRatio="none" role="img" aria-label="Balancing tensions and cursed wishes">
+            <line x1="200" y1="10" x2="200" y2="30" stroke="#8a6928" stroke-width="4"/>
+            <line x1="80" y1="30" x2="320" y2="30" stroke="#d9a441" stroke-width="3"/>
+            <line x1="120" y1="30" x2="100" y2="55" stroke="#a8b0bc"/><line x1="120" y1="30" x2="140" y2="55" stroke="#a8b0bc"/>
+            <line x1="280" y1="30" x2="260" y2="55" stroke="#a8b0bc"/><line x1="280" y1="30" x2="300" y2="55" stroke="#a8b0bc"/>
+            <ellipse cx="120" cy="58" rx="28" ry="6" fill="rgba(107,199,214,.25)" stroke="#6bc7d6"/>
+            <ellipse cx="280" cy="58" rx="28" ry="6" fill="rgba(224,106,95,.25)" stroke="#e06a5f"/>
+            <text x="120" y="61" text-anchor="middle" fill="#cfeff4" font-size="9" font-family="monospace">resolve</text>
+            <text x="280" y="61" text-anchor="middle" fill="#ffd0cb" font-size="9" font-family="monospace">cursed</text>
+            <polygon points="200,30 185,70 215,70" fill="#5a4318"/>
+          </svg>
+        </div>
+        <ul class="ideas">
+          <li><span class="itag">TRIZ</span><span>Speed vs rigor resolved by two-tier eval: fast smoke gate plus deep nightly suite</span></li>
+          <li><span class="itag">TRIZ</span><span>Generality vs specificity resolved by templates with a task-adapter plugin slot</span></li>
+          <li><span class="itag">TRIZ</span><span>Reuse vs freshness resolved by cached results with a staleness budget and auto-refresh</span></li>
+          <li><span class="itag">TRIZ</span><span>Automation vs control resolved by suggest mode: tool proposes, human approves</span></li>
+          <li><span class="itag">TRIZ</span><span>Privacy vs observability resolved by local redaction before traces leave the machine</span></li>
+          <li><span class="itag">TRIZ</span><span>Cursed Genie perfect evals get gamed: holdout set with a secret salt rotated weekly</span></li>
+          <li><span class="itag">TRIZ</span><span>Cursed Genie agents never fail but you cannot tell why: mandatory reason receipt per step</span></li>
+          <li><span class="itag">TRIZ</span><span>Cursed Genie infinite context but nothing retrievable: relevance scoring with an eviction log</span></li>
+          <li><span class="itag">TRIZ</span><span>Cursed Genie zero cost but zero determinism: distributional SLAs like p95 pass rate</span></li>
+          <li><span class="itag">TRIZ</span><span>Cursed Genie every call traced but nobody reads it: anomaly-only digest, not a firehose</span></li>
+          <li><span class="itag">TRIZ</span><span>Cursed Genie prompts auto-optimize but drift invisibly: every patch ships a diff and rollback token</span></li>
+        </ul>
+      </article>
+
+    </div>
+  </section>
+
+  <section aria-labelledby="climax-title">
+    <div class="section-title"><span class="led"></span><h2 id="climax-title">Control Room — The Climax &amp; Payoff</h2></div>
+    <div class="panel climax">
+      <div class="climax-grid">
+        <div>
+          <h3 style="font-family:var(--mono);color:var(--green);margin-bottom:.5rem">Affinity clusters (8 themes)</h3>
+          <div class="cluster-grid">
+            <div class="cluster"><h4><span class="cid">A</span>Versioning and reproducibility</h4></div>
+            <div class="cluster"><h4><span class="cid">B</span>Evaluation and quality gates</h4></div>
+            <div class="cluster"><h4><span class="cid">C</span>Observability and debugging</h4></div>
+            <div class="cluster"><h4><span class="cid">D</span>Data and grounding</h4></div>
+            <div class="cluster"><h4><span class="cid">E</span>Cost and routing</h4></div>
+            <div class="cluster"><h4><span class="cid">F</span>Safety and control</h4></div>
+            <div class="cluster"><h4><span class="cid">G</span>Authoring ergonomics</h4></div>
+            <div class="cluster"><h4><span class="cid">H</span>Agents and orchestration</h4></div>
+          </div>
+          <h3 style="font-family:var(--mono);color:var(--amber);margin:1rem 0 .4rem">Through-line</h3>
+          <p class="throughline">This is an evidence machine — versioned artifacts, executable evals, replayable traces; the gateway-style routing ideas are downstream consumers of that evidence, not the core.</p>
+        </div>
+        <div>
+          <h3 style="font-family:var(--mono);color:var(--cyan);margin-bottom:.5rem">MoSCoW decisions</h3>
+          <div class="moscow">
+            <div class="mbox must"><h4>Must</h4><ul>
+              <li>B: eval runner with regression gate</li>
+              <li>A: versioned prompt/model/data bundles with rollback</li>
+              <li>C: trace plus token ledger with one-click repro</li>
+              <li>D: golden sets from approved traces with PII redaction</li>
+              <li>G: CLI-first library surface</li>
+            </ul></div>
+            <div class="mbox should"><h4>Should</h4><ul>
+              <li>E: cost autopilot and model CV</li>
+              <li>F: abstain plus safety checks plus step budgets</li>
+              <li>H: structured step traces and budgets</li>
+            </ul></div>
+            <div class="mbox could"><h4>Could</h4><ul>
+              <li>Semantic diff</li>
+              <li>Time-travel debugging</li>
+              <li>Eval-case commons</li>
+              <li>Self-healing prompts</li>
+              <li>Meta-eval of the toolbox itself</li>
+            </ul></div>
+            <div class="mbox wont"><h4>Won't (this time)</h4><ul>
+              <li>Hosted service and marketplace</li>
+              <li>Elaborate UI</li>
+              <li>Autonomous agent fleet</li>
+              <li>LLM-written rubrics</li>
+            </ul></div>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="font-family:var(--mono);color:var(--amber);margin:1rem 0 .5rem">Insights</h3>
+      <div class="insights">
+        <div class="insight"><strong>Buried winners (constraint-derived)</strong><br>The constraint-derived ones: a 60-minute CLI that scores a CSV and diffs against baseline, one-line call logging, and experiment cards as diffable files — these make the whole toolbox testable before any UI exists.</div>
+        <div class="insight"><strong>Odd idea that matters most</strong><br>The red-team agent whose job is beating the evaluator — it turns evals from a static score into an adversarial loop that stays honest.</div>
+        <div class="insight"><strong>Three ideas, one idea</strong><br>Three ideas are one idea in different hats: flight recorder, time-travel debugging, and one-click repro all serve replayability — ship one trace format that powers all three.</div>
+        <div class="insight"><strong>The real tension</strong><br>The real tension is not model quality vs cost, it is speed vs rigor — the two-tier eval (smoke gate plus deep nightly) resolves it and should be the product's rhythm.</div>
+      </div>
+
+      <div class="direction">
+        <div class="dirbox">
+          <h4>Positioning</h4>
+          <p>A local-first, CLI-first evidence layer for LLM engineering; eval-driven, git-native, model-agnostic.</p>
+        </div>
+        <div class="dirbox">
+          <h4>MVP sequence</h4>
+          <ol>
+            <li>Call logging and trace format</li>
+            <li>Then eval runner and regression gate</li>
+            <li>Then versioned bundles and rollback</li>
+            <li>Then golden-set curation</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    LLM engineering toolbox brainstorm — 132 ideas across 11 techniques · kept as a single self-contained HTML artifact · source: .memlog.md
+  </footer>
+</div>
+</body>
+</html>
